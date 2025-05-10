@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import BackButton from "@/components/ui/BackButton";
 import HelpButton from "@/components/HelpButton";
@@ -21,19 +22,19 @@ export default function BankTransferPage() {
     {
       id: "bcp",
       name: "Banco de Crédito del Perú",
-      logoUrl: "/lovable-uploads/7279bca4-127a-4e3d-ac45-df8b43dbe0b5.png",
+      logoUrl: "/lovable-uploads/695eaef7-1a39-4a32-b58f-cb1b52cf7acf.png",
       accountName: "Kashin SAC"
     },
     {
       id: "interbank",
       name: "Interbank",
-      logoUrl: "/lovable-uploads/09022a71-a6f5-4796-81e4-ccd098389899.png",
+      logoUrl: "/lovable-uploads/809428d0-98e2-4b8c-a025-5565f8325f41.png",
       accountName: "Kashin SAC"
     },
     {
       id: "bbva",
       name: "BBVA",
-      logoUrl: "/lovable-uploads/0cf98db7-0df5-4d58-9e93-6a75fdcc50ad.png",
+      logoUrl: "/lovable-uploads/2f584b01-0d8d-49dc-afff-f3492b4b8347.png",
       accountName: "Kashin SAC"
     }
   ];

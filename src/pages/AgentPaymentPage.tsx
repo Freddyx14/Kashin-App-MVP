@@ -28,10 +28,6 @@ export default function AgentPaymentPage() {
     
     setShowCode(true);
   };
-  
-  const handleContinue = () => {
-    navigate("/pagar/exito");
-  };
 
   return (
     <div className="container mx-auto max-w-md bg-white min-h-screen pb-24">
@@ -88,13 +84,6 @@ export default function AgentPaymentPage() {
                   <li>Guarda tu comprobante de pago</li>
                 </ol>
               </div>
-              
-              <Button 
-                className="w-full bg-app-blue hover:bg-app-blue/90"
-                onClick={handleContinue}
-              >
-                Continuar
-              </Button>
             </div>
           )}
           
