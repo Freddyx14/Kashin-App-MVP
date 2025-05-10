@@ -18,6 +18,9 @@ import InvitePage from "./pages/InvitePage";
 import RewardsPage from "./pages/RewardsPage";
 import MorePage from "./pages/MorePage";
 import NotFound from "./pages/NotFound";
+import WelcomePage from "./pages/WelcomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +32,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/welcome" element={<WelcomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
           <Route path="/pagar" element={<PaymentSelectionPage />} />
           <Route path="/pagar/metodo" element={<PaymentDetailPage />} />
           <Route path="/pagar/confirmacion" element={<PaymentConfirmationPage />} />
