@@ -9,6 +9,11 @@ import PaymentSelectionPage from "./pages/PaymentSelectionPage";
 import PaymentDetailPage from "./pages/PaymentDetailPage";
 import PaymentConfirmationPage from "./pages/PaymentConfirmationPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import CardPaymentPage from "./pages/CardPaymentPage";
+import YapePaymentPage from "./pages/YapePaymentPage";
+import BankTransferPage from "./pages/BankTransferPage";
+import PaymentCodePage from "./pages/PaymentCodePage";
+import AgentPaymentPage from "./pages/AgentPaymentPage";
 import InvitePage from "./pages/InvitePage";
 import RewardsPage from "./pages/RewardsPage";
 import MorePage from "./pages/MorePage";
@@ -28,6 +33,11 @@ const App = () => (
           <Route path="/pagar/metodo" element={<PaymentDetailPage />} />
           <Route path="/pagar/confirmacion" element={<PaymentConfirmationPage />} />
           <Route path="/pagar/exito" element={<PaymentSuccessPage />} />
+          <Route path="/pagar/tarjeta" element={<CardPaymentPage />} />
+          <Route path="/pagar/yape" element={<YapePaymentPage />} />
+          <Route path="/pagar/transferencia" element={<BankTransferPage />} />
+          <Route path="/pagar/codigo/:bankId" element={<PaymentCodePage />} />
+          <Route path="/pagar/agentes" element={<AgentPaymentPage />} />
           <Route path="/invitar" element={<InvitePage />} />
           <Route path="/recompensas" element={<RewardsPage />} />
           <Route path="/mas" element={<MorePage />} />

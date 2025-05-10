@@ -1,13 +1,15 @@
 
-import { CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 interface PaymentOptionProps {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
-  fee: string;
-  selected: boolean;
+  fee: {
+    text: string;
+    color: "turquoise" | "orange";
+  };
   onClick: () => void;
 }
 
@@ -15,37 +17,28 @@ export default function PaymentOption({
   icon, 
   title, 
   description, 
-  fee, 
-  selected, 
+  fee,
   onClick 
 }: PaymentOptionProps) {
   return (
     <div 
-      className={cn(
-        "border rounded-lg p-4 mb-4 flex items-center gap-4 cursor-pointer",
-        selected && "border-app-turquoise"
-      )}
+      className="border border-gray-200 rounded-lg p-4 relative mb-4 cursor-pointer"
       onClick={onClick}
     >
-      <div className={cn(
-        "w-6 h-6 rounded-full border flex items-center justify-center",
-        selected ? "border-app-turquoise bg-app-turquoise" : "border-gray-300"
-      )}>
-        {selected && <CheckCircle size={24} className="text-white" />}
-      </div>
-      
-      <div className="flex items-center flex-1 gap-3">
-        <div className="bg-app-light-blue p-2 rounded-lg">
-          {icon}
+      <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-gray-300 bg-white"></div>
+      <div className="ml-8">
+        <div className="flex items-center gap-4">
+          <div className="bg-gray-100 p-2 rounded-lg">
+            {icon}
+          </div>
+          <div>
+            <p className="font-medium">{title}</p>
+            <p className="text-gray-500 text-sm">{description}</p>
+          </div>
         </div>
-        <div>
-          <p className="font-medium">{title}</p>
-          <p className="text-gray-500 text-sm">{description}</p>
+        <div className={`absolute -right-1 top-0 ${fee.color === "turquoise" ? "bg-app-turquoise" : "bg-orange-400"} text-white text-xs px-3 py-1 rounded-lg`}>
+          {fee.text}
         </div>
-      </div>
-      
-      <div className="bg-app-turquoise text-white rounded-full text-xs px-3 py-1">
-        {fee}
       </div>
     </div>
   );

@@ -1,86 +1,62 @@
 
-import BackButton from "@/components/ui/BackButton";
-import PaymentSummary from "@/components/PaymentSummary";
-import HelpButton from "@/components/HelpButton";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import BackButton from "@/components/ui/BackButton";
+import { Button } from "@/components/ui/button";
+import HelpButton from "@/components/HelpButton";
+import { CheckCircle } from "lucide-react";
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   
-  const paymentData = {
-    concept: "Pago de cuota",
-    amount: 65.00,
-    operationCode: "00815659",
-    paymentMethod: "Web/app",
-    bank: "BCP"
+  const handleContinue = () => {
+    navigate("/");
   };
-  
-  const handleConfirm = () => {
-    navigate('/');
-  };
-  
+
   return (
     <div className="container mx-auto max-w-md bg-white min-h-screen pb-24">
-      <div className="px-4">
-        <BackButton title="Confirmar Pago" />
+      <div className="px-4 flex flex-col items-center">
+        <div className="w-full">
+          <BackButton title="Pago exitoso" />
+        </div>
         
-        <div className="mt-8 flex flex-col items-center px-4">
-          <div className="bg-app-light-blue rounded-full p-8 mb-6">
-            <img 
-              src="/lovable-uploads/09022a71-a6f5-4796-81e4-ccd098389899.png" 
-              alt="Pago exitoso" 
-              className="w-24 h-24"
-            />
+        <div className="mt-16 flex flex-col items-center text-center">
+          <div className="bg-app-turquoise/10 p-6 rounded-full mb-6">
+            <CheckCircle size={80} className="text-app-turquoise" />
           </div>
           
-          <h1 className="text-2xl font-bold mb-2">¡Ya casi terminamos!</h1>
-          <p className="text-center text-gray-600 mb-8">
-            Por favor confirma los datos de tu pago a continuación:
+          <h1 className="text-2xl font-bold mb-4">¡Pago realizado exitosamente!</h1>
+          <p className="text-gray-600 mb-8 max-w-xs">
+            Tu pago ha sido procesado correctamente. El monto de S/65.00 ha sido aplicado a tu cuenta.
           </p>
           
-          <div className="w-full">
-            <div className="flex justify-between mb-2">
-              <p className="text-gray-500">Concepto</p>
-              <p>{paymentData.concept}</p>
+          <div className="w-full max-w-xs">
+            <div className="bg-gray-50 p-4 rounded-lg mb-8">
+              <div className="flex justify-between mb-3">
+                <span className="text-gray-500">Fecha:</span>
+                <span className="font-medium">25 mayo, 2025</span>
+              </div>
+              <div className="flex justify-between mb-3">
+                <span className="text-gray-500">Hora:</span>
+                <span className="font-medium">10:45 AM</span>
+              </div>
+              <div className="flex justify-between mb-3">
+                <span className="text-gray-500">Monto:</span>
+                <span className="font-medium">S/ 65.00</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Referencia:</span>
+                <span className="font-medium">PAG-25052025-1045</span>
+              </div>
             </div>
             
-            <div className="flex justify-between mb-2">
-              <p className="text-gray-500">Cuota</p>
-              <p>S/{paymentData.amount.toFixed(2)}</p>
-            </div>
-            
-            <div className="flex justify-between mb-2">
-              <p className="text-gray-500">Medio de pago</p>
-              <p>{paymentData.paymentMethod}</p>
-            </div>
-            
-            <div className="flex justify-between mb-2">
-              <p className="text-gray-500">Banco</p>
-              <p>{paymentData.bank}</p>
-            </div>
-            
-            <div className="flex justify-between mb-2">
-              <p className="text-gray-500">Código de operación</p>
-              <p>{paymentData.operationCode}</p>
-            </div>
-            
-            <PaymentSummary 
-              concept={paymentData.concept}
-              amount={paymentData.amount}
-              isGratis={true}
-            />
+            <Button
+              className="w-full bg-app-blue hover:bg-app-blue/90"
+              onClick={handleContinue}
+            >
+              Volver al inicio
+            </Button>
           </div>
         </div>
-      </div>
-      
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
-        <Button 
-          className="w-full bg-app-blue hover:bg-app-blue/90"
-          onClick={handleConfirm}
-        >
-          Confirmar Pago
-        </Button>
       </div>
       
       <HelpButton />
