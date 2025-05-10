@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import CustomerFeedback from "./pages/CustomerFeedback";
 import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => {
             <Route path="/pagar/transferencia" element={<BankTransferPage />} />
             <Route path="/pagar/codigo/:bankId" element={<PaymentCodePage />} />
             <Route path="/pagar/agentes" element={<AgentPaymentPage />} />
+            <Route path="/customer-feedback" element={<CustomerFeedback />} />
             <Route path="/invitar" element={<InvitePage />} />
             <Route path="/recompensas" element={<RewardsPage />} />
             <Route path="/mas" element={<MorePage />} />

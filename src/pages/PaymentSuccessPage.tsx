@@ -9,7 +9,7 @@ export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   
   const handleContinue = () => {
-    navigate("/");
+    navigate("/customer-feedback");
   };
 
   return (
@@ -53,7 +53,7 @@ export default function PaymentSuccessPage() {
               className="w-full bg-app-blue hover:bg-app-blue/90"
               onClick={handleContinue}
             >
-              Volver al inicio
+              Continuar
             </Button>
           </div>
         </div>
