@@ -81,7 +81,7 @@ export default function PaymentSelectionPage() {
             <PaymentOption 
               icon={<CreditCard size={24} className="text-app-blue" />}
               title="Tarjeta de débito"
-              description="Acreditación en minutos"
+              description="Validación instantánea"
               fee={{ text: "Comisión: Gratis", color: "turquoise" }}
               onClick={() => handlePaymentMethodSelect("card")}
             />
@@ -89,7 +89,7 @@ export default function PaymentSelectionPage() {
             <PaymentOption 
               icon={<Phone size={24} className="text-app-blue" />}
               title="Yape"
-              description="Acreditación en minutos"
+              description="Validación instantánea"
               fee={{ text: "Comisión: Gratis", color: "turquoise" }}
               onClick={() => handlePaymentMethodSelect("yape")}
             />
@@ -97,7 +97,7 @@ export default function PaymentSelectionPage() {
             <PaymentOption 
               icon={<Landmark size={24} className="text-app-blue" />}
               title="Transferencia bancaria"
-              description="Acreditación en 30 minutos"
+              description="Validación instantánea"
               fee={{ text: "Comisión: Gratis", color: "turquoise" }}
               onClick={() => handlePaymentMethodSelect("bank")}
             />
@@ -105,7 +105,7 @@ export default function PaymentSelectionPage() {
             <PaymentOption 
               icon={<Store size={24} className="text-app-blue" />}
               title="Pago por agentes"
-              description="Validado en 24 horas"
+              description="Validación instantánea"
               fee={{ text: "Comisión: Hasta S/9", color: "orange" }}
               onClick={() => handlePaymentMethodSelect("agent")}
             />
