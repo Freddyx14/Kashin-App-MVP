@@ -11,7 +11,6 @@ interface BankOption {
   id: string;
   name: string;
   logoUrl: string;
-  accountNumber: string;
   accountName: string;
 }
 
@@ -23,21 +22,18 @@ export default function BankTransferPage() {
       id: "bcp",
       name: "Banco de Crédito del Perú",
       logoUrl: "/lovable-uploads/7279bca4-127a-4e3d-ac45-df8b43dbe0b5.png",
-      accountNumber: "191-9077858032-0",
       accountName: "Kashin SAC"
     },
     {
       id: "interbank",
       name: "Interbank",
       logoUrl: "/lovable-uploads/09022a71-a6f5-4796-81e4-ccd098389899.png",
-      accountNumber: "200-3052047889",
       accountName: "Kashin SAC"
     },
     {
       id: "bbva",
       name: "BBVA",
       logoUrl: "/lovable-uploads/0cf98db7-0df5-4d58-9e93-6a75fdcc50ad.png",
-      accountNumber: "0011-0125-0200437892",
       accountName: "Kashin SAC"
     }
   ];
@@ -73,22 +69,7 @@ export default function BankTransferPage() {
                   <h3 className="font-medium">{bank.name}</h3>
                 </div>
                 
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Cuenta:</span>
-                    <div className="flex items-center gap-2">
-                      <span>{bank.accountNumber}</span>
-                      <button 
-                        onClick={() => copyToClipboard(
-                          bank.accountNumber, 
-                          `Número de cuenta ${bank.name} copiado`
-                        )}
-                      >
-                        <Copy size={16} className="text-app-blue" />
-                      </button>
-                    </div>
-                  </div>
-                  
+                <div className="space-y-2 mb-4">                  
                   <div className="flex justify-between">
                     <span className="text-gray-500">Nombre:</span>
                     <div className="flex items-center gap-2">
