@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import BackButton from "@/components/ui/BackButton";
 import HelpButton from "@/components/HelpButton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Copy } from "lucide-react";
+import { Copy, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import PaymentSummary from "@/components/PaymentSummary";
 

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HelpButton from "@/components/HelpButton";
 import PaymentOption from "@/components/PaymentOption";
-import { CreditCard, Phone, Bank, Store } from "lucide-react";
+import { CreditCard, Phone, Landmark, Store } from "lucide-react";
 
 export default function PaymentSelectionPage() {
   const [paymentType, setPaymentType] = useState<"single" | "full">("single");
@@ -95,7 +95,7 @@ export default function PaymentSelectionPage() {
             />
             
             <PaymentOption 
-              icon={<Bank size={24} className="text-app-blue" />}
+              icon={<Landmark size={24} className="text-app-blue" />}
               title="Transferencia bancaria"
               description="Acreditación en 30 minutos"
               fee={{ text: "Comisión: Gratis", color: "turquoise" }}
