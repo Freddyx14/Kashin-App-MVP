@@ -8,7 +8,7 @@ export default function BottomNav() {
   
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 flex justify-around">
-      <Link to="/" className={`flex flex-col items-center ${isActive('/') ? 'text-app-blue' : 'text-gray-500'}`}>
+      <Link to="/dashboard" className={`flex flex-col items-center ${isActive('/dashboard') ? 'text-app-blue' : 'text-gray-500'}`}>
         <Home size={24} />
         <span className="text-xs mt-1">Préstamos</span>
       </Link>

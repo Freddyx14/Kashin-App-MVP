@@ -57,7 +57,7 @@ export default function RegisterPage() {
     // Simulate registration process
     setTimeout(() => {
       setIsLoading(false);
-      navigate("/");
+      navigate("/dashboard");
     }, 1000);
   };
   

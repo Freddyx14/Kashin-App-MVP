@@ -26,7 +26,7 @@ export default function LoginPage() {
     // Simulate login process
     setTimeout(() => {
       setIsLoading(false);
-      navigate("/");
+      navigate("/dashboard");
     }, 1000);
   };
   
