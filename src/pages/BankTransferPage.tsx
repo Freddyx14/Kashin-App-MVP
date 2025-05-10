@@ -69,22 +69,6 @@ export default function BankTransferPage() {
                   <h3 className="font-medium">{bank.name}</h3>
                 </div>
                 
-                <div className="space-y-2 mb-4">                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Nombre:</span>
-                    <div className="flex items-center gap-2">
-                      <span>{bank.accountName}</span>
-                      <button 
-                        onClick={() => copyToClipboard(
-                          bank.accountName, 
-                          "Nombre copiado"
-                        )}
-                      >
-                        <Copy size={16} className="text-app-blue" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
                 
                 <Button 
                   className="w-full"
