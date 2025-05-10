@@ -7,15 +7,16 @@ export default function WelcomePage() {
   
   return (
     <div className="min-h-screen flex flex-col bg-white relative">
-      {/* Background pattern - light icons */}
-      <div className="absolute inset-0 bg-[url('/public/lovable-uploads/9e579174-945c-4b82-a0ec-2e0f6a7147da.png')] bg-repeat opacity-10 z-0" />
-      
-      <div className="flex-1 flex flex-col justify-center px-8 z-10">
-        <div className="max-w-sm mx-auto w-full mt-20">
-          <div className="mb-20">
+      <div className="flex-1 flex flex-col justify-center px-8 z-10 pt-8">
+        <div className="max-w-sm mx-auto w-full mt-6">
+          <div className="mb-16">
             <p className="text-4xl text-gray-700 font-medium leading-tight">
               Para <span className="inline-flex items-center">
-                <span className="text-[#00E0C6] mr-2">O</span>
+                <img 
+                  src="/lovable-uploads/b6290494-22eb-4874-8582-690064d80b55.png" 
+                  alt="Logo de Kashin" 
+                  className="h-10 w-10 mr-2"
+                />
                 <span className="text-app-blue">kashin</span>
               </span>,
             </p>
@@ -30,7 +31,7 @@ export default function WelcomePage() {
         </div>
       </div>
       
-      <div className="px-6 pb-10 z-10">
+      <div className="px-6 pb-10 z-10 mt-auto">
         <div className="max-w-sm mx-auto w-full space-y-4">
           <Button 
             onClick={() => navigate("/registro")}
