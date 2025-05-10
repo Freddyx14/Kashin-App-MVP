@@ -21,37 +21,41 @@ import NotFound from "./pages/NotFound";
 import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/welcome" element={<WelcomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/registro" element={<RegisterPage />} />
-          <Route path="/pagar" element={<PaymentSelectionPage />} />
-          <Route path="/pagar/metodo" element={<PaymentDetailPage />} />
-          <Route path="/pagar/confirmacion" element={<PaymentConfirmationPage />} />
-          <Route path="/pagar/exito" element={<PaymentSuccessPage />} />
-          <Route path="/pagar/tarjeta" element={<CardPaymentPage />} />
-          <Route path="/pagar/yape" element={<YapePaymentPage />} />
-          <Route path="/pagar/transferencia" element={<BankTransferPage />} />
-          <Route path="/pagar/codigo/:bankId" element={<PaymentCodePage />} />
-          <Route path="/pagar/agentes" element={<AgentPaymentPage />} />
-          <Route path="/invitar" element={<InvitePage />} />
-          <Route path="/recompensas" element={<RewardsPage />} />
-          <Route path="/mas" element={<MorePage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/welcome" element={<WelcomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/registro" element={<RegisterPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/pagar" element={<PaymentSelectionPage />} />
+            <Route path="/pagar/metodo" element={<PaymentDetailPage />} />
+            <Route path="/pagar/confirmacion" element={<PaymentConfirmationPage />} />
+            <Route path="/pagar/exito" element={<PaymentSuccessPage />} />
+            <Route path="/pagar/tarjeta" element={<CardPaymentPage />} />
+            <Route path="/pagar/yape" element={<YapePaymentPage />} />
+            <Route path="/pagar/transferencia" element={<BankTransferPage />} />
+            <Route path="/pagar/codigo/:bankId" element={<PaymentCodePage />} />
+            <Route path="/pagar/agentes" element={<AgentPaymentPage />} />
+            <Route path="/invitar" element={<InvitePage />} />
+            <Route path="/recompensas" element={<RewardsPage />} />
+            <Route path="/mas" element={<MorePage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+};
 
 export default App;
