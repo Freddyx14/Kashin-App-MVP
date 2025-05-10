@@ -43,7 +43,7 @@ export default function AgentPaymentPage() {
             <h1 className="text-xl font-bold">Pago por agentes autorizados</h1>
             <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg mt-4 flex items-center gap-2">
               <AlertTriangle size={18} />
-              <span>Este método incluye una comisión adicional</span>
+              <span>Este método incluye una comisión adicional si estás en provincia</span>
             </div>
           </div>
           
