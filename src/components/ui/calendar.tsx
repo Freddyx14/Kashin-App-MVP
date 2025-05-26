@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -39,8 +38,8 @@ function Calendar({
     setCurrentMonth(newDate);
   };
 
-  const currentYear = currentMonth.getFullYear();
-  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+  // Generate years from 1950 to 2024
+  const years = Array.from({ length: 75 }, (_, i) => 1950 + i);
 
   return (
     <DayPicker
