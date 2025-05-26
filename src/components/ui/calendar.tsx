@@ -1,11 +1,23 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+
+const months = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+];
 
 function Calendar({
   className,
@@ -13,10 +25,29 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+
+  const handleMonthChange = (monthIndex: number) => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(monthIndex);
+    setCurrentMonth(newDate);
+  };
+
+  const handleYearChange = (year: number) => {
+    const newDate = new Date(currentMonth);
+    newDate.setFullYear(year);
+    setCurrentMonth(newDate);
+  };
+
+  const currentYear = currentMonth.getFullYear();
+  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+
   return (
     <DayPicker
+      month={currentMonth}
+      onMonthChange={setCurrentMonth}
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("p-3 pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -54,6 +85,47 @@ function Calendar({
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        Caption: ({ displayMonth }) => (
+          <div className="flex items-center justify-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-sm font-medium hover:bg-accent hover:text-accent-foreground px-3 py-1 rounded-md transition-colors">
+                  {months[displayMonth.getMonth()]}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white z-50 max-h-60 overflow-y-auto">
+                {months.map((month, index) => (
+                  <DropdownMenuItem
+                    key={month}
+                    onClick={() => handleMonthChange(index)}
+                    className="cursor-pointer"
+                  >
+                    {month}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-sm font-medium hover:bg-accent hover:text-accent-foreground px-3 py-1 rounded-md transition-colors">
+                  {displayMonth.getFullYear()}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white z-50 max-h-60 overflow-y-auto">
+                {years.map((year) => (
+                  <DropdownMenuItem
+                    key={year}
+                    onClick={() => handleYearChange(year)}
+                    className="cursor-pointer"
+                  >
+                    {year}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ),
       }}
       {...props}
     />
