@@ -1,4 +1,3 @@
-
 import UserHeader from "@/components/UserHeader";
 import BalanceCard from "@/components/BalanceCard";
 import PromoCard from "@/components/PromoCard";
@@ -7,8 +6,11 @@ import TransactionItem from "@/components/TransactionItem";
 import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
 import { Users, Banknote } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   // Normalmente estos datos vendrían de una API o servicio
   const userData = {
     name: "Mahayli Adelia",
@@ -51,6 +53,7 @@ export default function Dashboard() {
             <PromoCard 
               icon={<Users size={24} />}
               title="¡Gana S/20 por cada amigo que invites!"
+              onClick={() => navigate("/invitar")}
             />
             <PromoCard 
               icon={<Banknote size={24} />}
