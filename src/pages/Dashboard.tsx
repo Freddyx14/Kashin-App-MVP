@@ -1,3 +1,4 @@
+
 import UserHeader from "@/components/UserHeader";
 import BalanceCard from "@/components/BalanceCard";
 import PromoCard from "@/components/PromoCard";
@@ -58,6 +59,7 @@ export default function Dashboard() {
             <PromoCard 
               icon={<Banknote size={24} />}
               title="¡Te devolvemos tus intereses y comisiones!"
+              onClick={() => navigate("/recompensas")}
             />
           </div>
           
