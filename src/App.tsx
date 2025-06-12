@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import PaymentSelectionPage from "./pages/PaymentSelectionPage";
 import PaymentDetailPage from "./pages/PaymentDetailPage";
@@ -28,32 +30,89 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/welcome" element={<WelcomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/registro" element={<RegisterPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/pagar" element={<PaymentSelectionPage />} />
-            <Route path="/pagar/metodo" element={<PaymentDetailPage />} />
-            <Route path="/pagar/exito" element={<PaymentSuccessPage />} />
-            <Route path="/pagar/tarjeta" element={<CardPaymentPage />} />
-            <Route path="/pagar/yape" element={<YapePaymentPage />} />
-            <Route path="/pagar/transferencia" element={<BankTransferPage />} />
-            <Route path="/pagar/codigo/:bankId" element={<PaymentCodePage />} />
-            <Route path="/pagar/agentes" element={<AgentPaymentPage />} />
-            <Route path="/customer-feedback" element={<CustomerFeedback />} />
-            <Route path="/invitar" element={<InvitePage />} />
-            <Route path="/recompensas" element={<RewardsPage />} />
-            <Route path="/mas" element={<MorePage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/welcome" element={<WelcomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/registro" element={<RegisterPage />} />
+              
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar" element={
+                <ProtectedRoute>
+                  <PaymentSelectionPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar/metodo" element={
+                <ProtectedRoute>
+                  <PaymentDetailPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar/exito" element={
+                <ProtectedRoute>
+                  <PaymentSuccessPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar/tarjeta" element={
+                <ProtectedRoute>
+                  <CardPaymentPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar/yape" element={
+                <ProtectedRoute>
+                  <YapePaymentPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar/transferencia" element={
+                <ProtectedRoute>
+                  <BankTransferPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar/codigo/:bankId" element={
+                <ProtectedRoute>
+                  <PaymentCodePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/pagar/agentes" element={
+                <ProtectedRoute>
+                  <AgentPaymentPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/customer-feedback" element={
+                <ProtectedRoute>
+                  <CustomerFeedback />
+                </ProtectedRoute>
+              } />
+              <Route path="/invitar" element={
+                <ProtectedRoute>
+                  <InvitePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/recompensas" element={
+                <ProtectedRoute>
+                  <RewardsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/mas" element={
+                <ProtectedRoute>
+                  <MorePage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TooltipProvider>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

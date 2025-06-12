@@ -6,14 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import BackButton from "@/components/ui/BackButton";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -23,11 +25,28 @@ export default function LoginPage() {
     
     setIsLoading(true);
     
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        console.error('Login error:', error);
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error("Credenciales incorrectas");
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error("Por favor confirma tu correo electrónico");
+        } else {
+          toast.error("Error al iniciar sesión: " + error.message);
+        }
+      } else {
+        toast.success("¡Bienvenido!");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error("Error inesperado al iniciar sesión");
+    } finally {
       setIsLoading(false);
-      navigate("/dashboard");
-    }, 1000);
+    }
   };
   
   return (
@@ -49,6 +68,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="correo@ejemplo.com"
+                required
               />
             </div>
             
@@ -60,6 +80,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                required
               />
             </div>
             

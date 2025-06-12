@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import UserHeader from "@/components/UserHeader";
 import BalanceCard from "@/components/BalanceCard";
 import PromoCard from "@/components/PromoCard";
@@ -6,15 +7,73 @@ import LoanStatusCard from "@/components/LoanStatusCard";
 import TransactionItem from "@/components/TransactionItem";
 import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
-import { Users, Banknote } from "lucide-react";
+import { Users, Banknote, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+interface UserProfile {
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  dni: string;
+  birth_date: string;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Normalmente estos datos vendrían de una API o servicio
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+        } else {
+          setUserProfile(data);
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Sesión cerrada correctamente");
+      navigate("/welcome");
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error("Error al cerrar sesión");
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (userProfile) {
+      return `${userProfile.first_name} ${userProfile.last_name}`;
+    }
+    return user?.email?.split('@')[0] || 'Usuario';
+  };
+
+  // Datos de ejemplo para el resto de la funcionalidad
   const userData = {
-    name: "Mahayli Adelia",
     availableBalance: 50.00,
     creditLine: 100.00,
     points: 0,
@@ -36,11 +95,32 @@ export default function Dashboard() {
       }
     ]
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-app-gray">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-app-blue mx-auto"></div>
+          <p className="mt-2 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="pb-20 bg-app-gray min-h-screen">
       <div className="container mx-auto max-w-md bg-white">
-        <UserHeader userName={userData.name} />
+        <div className="flex items-center justify-between p-4">
+          <UserHeader userName={getUserDisplayName()} />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <LogOut size={16} />
+          </Button>
+        </div>
         
         <div className="px-4 pb-6">
           <BalanceCard 

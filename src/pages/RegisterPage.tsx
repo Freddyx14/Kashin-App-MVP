@@ -16,9 +16,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -36,7 +38,7 @@ export default function RegisterPage() {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
@@ -51,14 +53,44 @@ export default function RegisterPage() {
       toast.error("Las contraseñas no coinciden");
       return;
     }
+
+    if (formData.password.length < 6) {
+      toast.error("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
     
     setIsLoading(true);
     
-    // Simulate registration process
-    setTimeout(() => {
+    try {
+      const userData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone_number: formData.phoneNumber,
+        dni: formData.dni,
+        birth_date: format(birthDate, 'yyyy-MM-dd'),
+      };
+
+      const { error } = await signUp(formData.email, formData.password, userData);
+      
+      if (error) {
+        console.error('Registration error:', error);
+        if (error.message.includes('User already registered')) {
+          toast.error("Este correo ya está registrado");
+        } else if (error.message.includes('Password should be at least 6 characters')) {
+          toast.error("La contraseña debe tener al menos 6 caracteres");
+        } else {
+          toast.error("Error al registrarse: " + error.message);
+        }
+      } else {
+        toast.success("¡Registro exitoso! Revisa tu correo para confirmar tu cuenta.");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error("Error inesperado al registrarse");
+    } finally {
       setIsLoading(false);
-      navigate("/dashboard");
-    }, 1000);
+    }
   };
   
   return (
@@ -79,6 +111,7 @@ export default function RegisterPage() {
                 value={formData.firstName}
                 onChange={handleChange}
                 placeholder="Ingresa tus nombres"
+                required
               />
             </div>
             
@@ -89,6 +122,7 @@ export default function RegisterPage() {
                 value={formData.lastName}
                 onChange={handleChange}
                 placeholder="Ingresa tus apellidos"
+                required
               />
             </div>
             
@@ -100,6 +134,7 @@ export default function RegisterPage() {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 placeholder="Ej: 999 888 777"
+                required
               />
             </div>
             
@@ -111,6 +146,7 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 placeholder="Ingresa tu número de DNI"
                 maxLength={8}
+                required
               />
             </div>
             
@@ -124,6 +160,7 @@ export default function RegisterPage() {
                       "w-full justify-start text-left font-normal",
                       !birthDate && "text-muted-foreground"
                     )}
+                    type="button"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {birthDate ? (
@@ -157,6 +194,7 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="correo@ejemplo.com"
+                required
               />
             </div>
             
@@ -168,6 +206,8 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
+                minLength={6}
+                required
               />
             </div>
             
@@ -179,6 +219,8 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="••••••••"
+                minLength={6}
+                required
               />
             </div>
             
