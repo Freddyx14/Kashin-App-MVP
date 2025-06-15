@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import HelpButton from "@/components/HelpButton";
-import { CreditCard, Calendar, Lock } from "lucide-react";
+import { CreditCard, Calendar, Lock, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import PaymentSummary from "@/components/PaymentSummary";
 
@@ -16,9 +17,15 @@ export default function CardPaymentPage() {
   const [cvv, setCvv] = useState("");
   const [dni, setDni] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Detect if running on localhost
+    const hostname = window.location.hostname;
+    const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname.includes("localhost");
+    setIsLocalhost(isLocal);
+
     if (!window.MercadoPago && typeof window !== "undefined") {
       const script = document.createElement("script");
       script.src = "https://sdk.mercadopago.com/js/v2";
@@ -28,6 +35,11 @@ export default function CardPaymentPage() {
   }, []);
 
   const handlePayment = async () => {
+    if (isLocalhost) {
+      toast.error("⚠️ MercadoPago puede bloquear solicitudes desde localhost por CORS");
+      return;
+    }
+
     if (!cardName || !cardNumber || !expiry || !cvv || !dni) {
       toast.error("Por favor complete todos los campos");
       return;
@@ -92,6 +104,26 @@ export default function CardPaymentPage() {
     <div className="container mx-auto max-w-md bg-white min-h-screen pb-24">
       <div className="px-4">
         <BackButton title="Pago con tarjeta" />
+        
+        {isLocalhost && (
+          <div className="mt-4 mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-yellow-600 mt-0.5" size={20} />
+              <div className="text-sm">
+                <h3 className="font-semibold text-yellow-800 mb-2">
+                  ⚠️ Entorno de desarrollo detectado
+                </h3>
+                <p className="text-yellow-700 mb-3">
+                  MercadoPago puede bloquear solicitudes por CORS desde localhost. Para probar los pagos, recomendamos:
+                </p>
+                <ul className="text-yellow-700 space-y-1 ml-4">
+                  <li>• Desplegar temporalmente en Vercel o Netlify</li>
+                  <li>• Usar Ngrok para obtener un dominio HTTPS válido</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="mt-8">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg text-white mb-6">
@@ -220,9 +252,9 @@ export default function CardPaymentPage() {
         <Button 
           className="w-full bg-app-blue hover:bg-app-blue/90"
           onClick={handlePayment}
-          disabled={isProcessing}
+          disabled={isProcessing || isLocalhost}
         >
-          {isProcessing ? "Procesando..." : "Pagar ahora"}
+          {isProcessing ? "Procesando..." : isLocalhost ? "No disponible en localhost" : "Pagar ahora"}
         </Button>
       </div>
 
