@@ -9,7 +9,6 @@ import HelpButton from "@/components/HelpButton";
 import { CreditCard, Calendar, Lock } from "lucide-react";
 import { toast } from "sonner";
 import PaymentSummary from "@/components/PaymentSummary";
-import { supabase } from "@/integrations/supabase/client";
 
 export default function CardPaymentPage() {
   const [cardName, setCardName] = useState("");
@@ -19,68 +18,20 @@ export default function CardPaymentPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
     // Validate form
     if (!cardName || !cardNumber || !expiry || !cvv) {
       toast.error("Por favor complete todos los campos");
       return;
     }
 
-    // Basic card number validation (should be 16 digits)
-    if (cardNumber.length !== 16) {
-      toast.error("El número de tarjeta debe tener 16 dígitos");
-      return;
-    }
-
-    // Basic expiry validation (MM/YY format)
-    if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-      toast.error("Formato de fecha inválido (MM/AA)");
-      return;
-    }
-
-    // Basic CVV validation (3 or 4 digits)
-    if (cvv.length < 3 || cvv.length > 4) {
-      toast.error("CVV debe tener 3 o 4 dígitos");
-      return;
-    }
-
     setIsProcessing(true);
-    toast("💳 Preparando pago...");
+    toast("💳 Pago iniciado, tu pago está siendo procesado...");
     
-    try {
-      console.log('Creating payment preference...');
-      
-      const { data, error } = await supabase.functions.invoke('create-payment-preference', {
-        body: {
-          amount: 65.00,
-          title: "Pago de cuota"
-        }
-      });
-
-      if (error) {
-        console.error('Error creating payment preference:', error);
-        throw error;
-      }
-
-      console.log('Payment preference created:', data);
-
-      if (data && data.sandbox_init_point) {
-        toast.success("Redirigiendo a MercadoPago...");
-        console.log('Redirecting to:', data.sandbox_init_point);
-        
-        // Redirect to MercadoPago sandbox checkout
-        setTimeout(() => {
-          window.location.href = data.sandbox_init_point;
-        }, 1000);
-      } else {
-        throw new Error('No se recibió el enlace de pago válido');
-      }
-
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error("Error al procesar el pago. Intenta nuevamente.");
-      setIsProcessing(false);
-    }
+    // Simulate processing delay
+    setTimeout(() => {
+      navigate("/pagar/exito");
+    }, 5000);
   };
 
   return (
@@ -114,7 +65,7 @@ export default function CardPaymentPage() {
             </div>
           </div>
           
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4">
             <div>
               <Label htmlFor="cardName">Nombre del titular</Label>
               <Input
@@ -123,7 +74,6 @@ export default function CardPaymentPage() {
                 value={cardName}
                 onChange={(e) => setCardName(e.target.value)}
                 className="mt-1"
-                disabled={isProcessing}
               />
             </div>
             
@@ -140,7 +90,6 @@ export default function CardPaymentPage() {
                       setCardNumber(value);
                     }
                   }}
-                  disabled={isProcessing}
                 />
                 <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               </div>
@@ -164,7 +113,6 @@ export default function CardPaymentPage() {
                         }
                       }
                     }}
-                    disabled={isProcessing}
                   />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 </div>
@@ -185,7 +133,6 @@ export default function CardPaymentPage() {
                         setCvv(value);
                       }
                     }}
-                    disabled={isProcessing}
                   />
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 </div>
@@ -196,7 +143,7 @@ export default function CardPaymentPage() {
           <div className="mt-6">
             <p className="text-center text-sm text-gray-500 flex items-center justify-center gap-2 mb-6">
               <Lock size={16} />
-              Tu información está cifrada y protegida por MercadoPago
+              Tu información está cifrada y protegida
             </p>
           </div>
           
@@ -214,7 +161,7 @@ export default function CardPaymentPage() {
           onClick={handlePayment}
           disabled={isProcessing}
         >
-          {isProcessing ? "Procesando..." : "Continuar con MercadoPago"}
+          {isProcessing ? "Procesando..." : "Pagar ahora"}
         </Button>
       </div>
       
