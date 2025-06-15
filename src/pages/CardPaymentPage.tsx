@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
@@ -21,12 +22,10 @@ export default function CardPaymentPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Detect if running on localhost
     const hostname = window.location.hostname;
     const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname.includes("localhost");
     setIsLocalhost(isLocal);
 
-    // Load MercadoPago SDK
     const loadMercadoPagoSDK = () => {
       if (window.MercadoPago) {
         console.log("MercadoPago SDK ya está cargado");
@@ -39,7 +38,7 @@ export default function CardPaymentPage() {
       script.async = true;
       script.onload = () => {
         console.log("MercadoPago SDK cargado exitosamente");
-        initializeMercadoPago();
+        setTimeout(initializeMercadoPago, 100); // Pequeño delay para asegurar que el SDK esté listo
       };
       script.onerror = () => {
         console.error("Error al cargar el SDK de MercadoPago");
@@ -51,7 +50,9 @@ export default function CardPaymentPage() {
     const initializeMercadoPago = () => {
       try {
         if (window.MercadoPago) {
-          const mp = new window.MercadoPago("TEST-177b782c-c205-4a22-a9cf-c012b6eebc53");
+          const mp = new window.MercadoPago("TEST-177b782c-c205-4a22-a9cf-c012b6eebc53", {
+            locale: "es-PE"
+          });
           setMpInstance(mp);
           console.log("MercadoPago inicializado correctamente");
         }
@@ -64,22 +65,34 @@ export default function CardPaymentPage() {
     loadMercadoPagoSDK();
   }, []);
 
-  const detectCardType = (cardNumber: string) => {
+  const getCardType = (cardNumber: string) => {
     const cleanNumber = cardNumber.replace(/\s/g, '');
+    
+    // Tarjetas de prueba específicas de MercadoPago
+    if (cleanNumber.startsWith('4509')) return 'visa';
+    if (cleanNumber.startsWith('5031')) return 'mastercard';
+    if (cleanNumber.startsWith('3711')) return 'amex';
+    
+    // Fallbacks generales
     if (cleanNumber.startsWith('4')) return 'visa';
     if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) return 'mastercard';
     if (cleanNumber.startsWith('3')) return 'amex';
-    return 'visa'; // default fallback
+    
+    return 'visa';
   };
 
   const validateCardData = () => {
-    if (!cardName.trim()) {
-      toast.error("El nombre del titular es requerido");
+    const cleanCardNumber = cardNumber.replace(/\s/g, '');
+    
+    if (!cardName.trim() || cardName.trim().length < 2) {
+      toast.error("El nombre del titular debe tener al menos 2 caracteres");
       return false;
     }
     
-    if (!cardNumber || cardNumber.replace(/\s/g, '').length < 13) {
-      toast.error("Número de tarjeta inválido");
+    // Validar tarjetas de prueba específicas
+    const validTestCards = ['4509953566233704', '5031433215406351', '3711803032769225'];
+    if (!validTestCards.includes(cleanCardNumber) && cleanCardNumber.length < 13) {
+      toast.error("Usa una tarjeta de prueba válida de MercadoPago");
       return false;
     }
     
@@ -88,86 +101,115 @@ export default function CardPaymentPage() {
       return false;
     }
     
+    // Validar que la fecha no sea pasada
+    const [month, year] = expiry.split('/');
+    const currentDate = new Date();
+    const cardDate = new Date(2000 + parseInt(year), parseInt(month) - 1);
+    
+    if (cardDate < currentDate) {
+      toast.error("La tarjeta está vencida");
+      return false;
+    }
+    
     if (!cvv || cvv.length < 3) {
-      toast.error("CVV inválido");
+      toast.error("CVV debe tener al menos 3 dígitos");
       return false;
     }
     
     if (!dni || dni.length < 8) {
-      toast.error("DNI inválido");
+      toast.error("DNI debe tener al menos 8 dígitos");
       return false;
     }
     
     return true;
   };
 
-  const createPaymentToken = async () => {
+  const createPaymentToken = async (): Promise<string> => {
+    if (!mpInstance) {
+      throw new Error("SDK de MercadoPago no disponible");
+    }
+
     return new Promise((resolve, reject) => {
-      const expiration = expiry.split("/");
+      const [month, year] = expiry.split("/");
       
       const cardData = {
         cardNumber: cardNumber.replace(/\s/g, ''),
-        cardholderName: cardName.trim(),
-        cardExpirationMonth: expiration[0],
-        cardExpirationYear: "20" + expiration[1],
+        cardholderName: cardName.trim().toUpperCase(),
+        cardExpirationMonth: month,
+        cardExpirationYear: `20${year}`,
         securityCode: cvv,
         identificationType: "DNI",
         identificationNumber: dni,
       };
 
-      console.log("Creando token con datos:", { ...cardData, securityCode: "***", cardNumber: "****" });
+      console.log("Creando token con datos:", { 
+        ...cardData, 
+        securityCode: "***", 
+        cardNumber: cardData.cardNumber.replace(/\d(?=\d{4})/g, "*")
+      });
 
-      // Set timeout for token creation
       const timeoutId = setTimeout(() => {
-        reject(new Error("Timeout creando token de tarjeta"));
-      }, 15000);
+        reject(new Error("Timeout al crear token de tarjeta"));
+      }, 10000);
 
-      if (mpInstance && typeof mpInstance.createCardToken === 'function') {
+      try {
         mpInstance.createCardToken(cardData, (error: any, token: any) => {
           clearTimeout(timeoutId);
           
+          console.log("Respuesta createCardToken - Error:", error);
+          console.log("Respuesta createCardToken - Token:", token);
+          
           if (error) {
-            console.error("Error creando token:", error);
-            reject(error);
+            console.error("Error detallado del token:", error);
+            
+            if (error.cause && error.cause.length > 0) {
+              const firstError = error.cause[0];
+              reject(new Error(`Error en ${firstError.code}: ${firstError.description}`));
+            } else {
+              reject(new Error(error.message || "Error desconocido creando token"));
+            }
           } else if (token && token.id) {
             console.log("Token creado exitosamente:", token.id);
-            resolve(token);
+            resolve(token.id);
           } else {
-            console.error("Token inválido recibido:", token);
-            reject(new Error("Token inválido"));
+            reject(new Error("Token inválido recibido del SDK"));
           }
         });
-      } else {
+      } catch (err) {
         clearTimeout(timeoutId);
-        reject(new Error("SDK de MercadoPago no disponible"));
+        console.error("Error en createCardToken:", err);
+        reject(err);
       }
     });
   };
 
   const processPayment = async (token: string) => {
-    const paymentMethodId = detectCardType(cardNumber);
-    
     const paymentData = {
       token,
       transaction_amount: 65,
-      payment_method_id: paymentMethodId,
+      payment_method_id: getCardType(cardNumber),
       installments: 1,
       payer: {
-        email: "test_user_63274564@testuser.com", // Email de prueba válido
+        email: "test_user_12345678@testuser.com",
         identification: {
           type: "DNI",
           number: dni,
         },
         first_name: cardName.split(' ')[0] || cardName,
-        last_name: cardName.split(' ').slice(1).join(' ') || "Usuario"
+        last_name: cardName.split(' ').slice(1).join(' ') || "Test"
       },
-      description: "Pago de cuota - Prestamos Kashin"
+      description: "Pago de cuota - Prestamos Kashin",
+      binary_mode: false,
+      statement_descriptor: "KASHIN"
     };
 
-    console.log("Enviando pago con datos:", paymentData);
+    console.log("Procesando pago con datos:", paymentData);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => {
+      console.log("Timeout en petición de pago");
+      controller.abort();
+    }, 20000);
 
     try {
       const response = await fetch("https://api.mercadopago.com/v1/payments", {
@@ -175,26 +217,46 @@ export default function CardPaymentPage() {
         headers: {
           "Authorization": "Bearer TEST-4917101840137683-061503-5ff0359d778336bd9985af07b2323238-519329860",
           "Content-Type": "application/json",
-          "X-Idempotency-Key": `payment-${Date.now()}-${Math.random()}`
+          "X-Idempotency-Key": `payment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         },
         body: JSON.stringify(paymentData),
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
-      const result = await response.json();
-      console.log("Respuesta completa del pago:", result);
+      
+      const responseText = await response.text();
+      console.log("Respuesta completa del servidor:", responseText);
+      
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Error parseando respuesta JSON:", parseError);
+        throw new Error("Respuesta inválida del servidor");
+      }
 
-      return { response, result };
-    } catch (error) {
+      console.log("Respuesta parseada:", result);
+
+      if (!response.ok) {
+        console.error("Error HTTP:", response.status, result);
+        const errorMsg = result.message || 
+                        (result.cause && result.cause[0] && result.cause[0].description) || 
+                        `Error HTTP ${response.status}`;
+        throw new Error(errorMsg);
+      }
+
+      return result;
+    } catch (error: any) {
       clearTimeout(timeoutId);
+      console.error("Error en processPayment:", error);
       throw error;
     }
   };
 
   const handlePayment = async () => {
     if (isLocalhost) {
-      toast.error("⚠️ MercadoPago puede bloquear solicitudes desde localhost por CORS");
+      toast.error("⚠️ Para probar pagos, usa un dominio válido (no localhost)");
       return;
     }
 
@@ -211,39 +273,27 @@ export default function CardPaymentPage() {
     console.log("=== INICIANDO PROCESO DE PAGO ===");
 
     try {
-      // Step 1: Create token
-      console.log("Paso 1: Creando token...");
-      const tokenResponse = await createPaymentToken();
-      const token = (tokenResponse as any).id;
+      console.log("Paso 1: Creando token de tarjeta...");
+      const token = await createPaymentToken();
       
-      if (!token) {
-        throw new Error("No se pudo generar el token de la tarjeta");
-      }
+      console.log("Paso 2: Procesando pago con token:", token);
+      const result = await processPayment(token);
 
-      console.log("Token creado exitosamente:", token);
+      console.log("Estado del pago:", result.status);
+      console.log("Detalle del estado:", result.status_detail);
 
-      // Step 2: Process payment
-      console.log("Paso 2: Procesando pago...");
-      const { response, result } = await processPayment(token);
-
-      if (response.ok) {
-        if (result.status === "approved") {
-          console.log("✅ Pago aprobado exitosamente");
-          toast.success("✅ ¡Pago aprobado exitosamente!");
-          navigate("/pagar/exito");
-        } else if (result.status === "pending") {
-          console.log("⏳ Pago pendiente");
-          toast.success("⏳ Pago en proceso de verificación");
-          navigate("/pagar/exito");
-        } else {
-          const statusDetail = result.status_detail || "Estado desconocido";
-          console.error("❌ Pago rechazado:", result.status, statusDetail);
-          toast.error(`❌ Pago rechazado: ${statusDetail}`);
-        }
+      if (result.status === "approved") {
+        console.log("✅ Pago aprobado exitosamente");
+        toast.success("✅ ¡Pago aprobado exitosamente!");
+        navigate("/pagar/exito");
+      } else if (result.status === "pending") {
+        console.log("⏳ Pago pendiente");
+        toast.success("⏳ Pago en proceso de verificación");
+        navigate("/pagar/exito");
       } else {
-        const errorMsg = result.message || result.cause?.[0]?.description || "Error en la API";
-        console.error("❌ Error HTTP:", response.status, errorMsg);
-        toast.error(`❌ Error: ${errorMsg}`);
+        const statusDetail = result.status_detail || "Estado desconocido";
+        console.error("❌ Pago rechazado:", result.status, statusDetail);
+        toast.error(`❌ Pago rechazado: ${statusDetail}`);
       }
 
     } catch (error: any) {
@@ -252,12 +302,12 @@ export default function CardPaymentPage() {
       if (error.name === 'AbortError') {
         toast.error("❌ Tiempo de espera agotado. Intenta nuevamente.");
       } else if (error.message?.includes('CORS')) {
-        toast.error("❌ Error de conexión. Intenta desde un dominio válido.");
+        toast.error("❌ Error de CORS. Usa un dominio válido.");
       } else if (error.message?.includes('Timeout')) {
-        toast.error("❌ Tiempo de espera agotado. Intenta nuevamente.");
+        toast.error("❌ Tiempo de espera agotado. Verifica tu conexión.");
       } else {
         const errorMsg = error.message || "Error desconocido";
-        toast.error(`❌ Error procesando el pago: ${errorMsg}`);
+        toast.error(`❌ Error: ${errorMsg}`);
       }
     } finally {
       setIsProcessing(false);
@@ -279,16 +329,28 @@ export default function CardPaymentPage() {
                   ⚠️ Entorno de desarrollo detectado
                 </h3>
                 <p className="text-yellow-700 mb-3">
-                  MercadoPago puede bloquear solicitudes por CORS desde localhost. Para probar los pagos, recomendamos:
+                  MercadoPago requiere un dominio válido. Para probar:
                 </p>
                 <ul className="text-yellow-700 space-y-1 ml-4">
-                  <li>• Desplegar temporalmente en Vercel o Netlify</li>
-                  <li>• Usar Ngrok para obtener un dominio HTTPS válido</li>
+                  <li>• Usa Vercel, Netlify o similar</li>
+                  <li>• Configura Ngrok con HTTPS</li>
                 </ul>
               </div>
             </div>
           </div>
         )}
+
+        <div className="mt-4 mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="font-semibold text-blue-800 mb-2">
+            📋 Tarjetas de prueba de MercadoPago
+          </h3>
+          <div className="text-sm text-blue-700 space-y-1">
+            <p><strong>Visa:</strong> 4509 9535 6623 3704</p>
+            <p><strong>Mastercard:</strong> 5031 4332 1540 6351</p>
+            <p><strong>CVV:</strong> 123 | <strong>Fecha:</strong> 11/25</p>
+            <p><strong>DNI:</strong> 12345678</p>
+          </div>
+        </div>
         
         <div className="mt-8">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg text-white mb-6">
