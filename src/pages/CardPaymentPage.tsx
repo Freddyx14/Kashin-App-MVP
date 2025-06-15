@@ -45,7 +45,7 @@ export default function CardPaymentPage() {
     }
 
     setIsProcessing(true);
-    toast("💳 Creando preferencia de pago...");
+    toast("💳 Preparando pago...");
     
     try {
       console.log('Creating payment preference...');
@@ -64,12 +64,16 @@ export default function CardPaymentPage() {
 
       console.log('Payment preference created:', data);
 
-      if (data && data.init_point) {
+      if (data && data.sandbox_init_point) {
         toast.success("Redirigiendo a MercadoPago...");
-        // Redirect to MercadoPago checkout
-        window.location.href = data.init_point;
+        console.log('Redirecting to:', data.sandbox_init_point);
+        
+        // Redirect to MercadoPago sandbox checkout
+        setTimeout(() => {
+          window.location.href = data.sandbox_init_point;
+        }, 1000);
       } else {
-        throw new Error('No se recibió el enlace de pago');
+        throw new Error('No se recibió el enlace de pago válido');
       }
 
     } catch (error) {
@@ -210,7 +214,7 @@ export default function CardPaymentPage() {
           onClick={handlePayment}
           disabled={isProcessing}
         >
-          {isProcessing ? "Procesando..." : "Pagar con MercadoPago"}
+          {isProcessing ? "Procesando..." : "Continuar con MercadoPago"}
         </Button>
       </div>
       

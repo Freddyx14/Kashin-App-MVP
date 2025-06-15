@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount = 50.00, title = "Pago con tarjeta" } = await req.json();
+    const { amount = 65.00, title = "Pago de cuota" } = await req.json();
 
     const accessToken = "TEST-4917101840137683-061503-5ff0359d778336bd9985af07b2323238-519329860";
     
@@ -28,8 +28,8 @@ serve(async (req) => {
       ],
       back_urls: {
         success: `${req.headers.get('origin')}/pagar/exito`,
-        failure: `${req.headers.get('origin')}/pagar`,
-        pending: `${req.headers.get('origin')}/pagar`
+        failure: `${req.headers.get('origin')}/pagar/tarjeta`,
+        pending: `${req.headers.get('origin')}/pagar/tarjeta`
       },
       auto_return: "approved",
       payment_methods: {
@@ -37,8 +37,17 @@ serve(async (req) => {
           { id: "ticket" },
           { id: "bank_transfer" },
           { id: "atm" }
-        ]
-      }
+        ],
+        installments: 12,
+        default_installments: 1
+      },
+      payer: {
+        name: "Test User",
+        surname: "Test",
+        email: "test@test.com"
+      },
+      external_reference: `payment_${Date.now()}`,
+      notification_url: null
     };
 
     console.log('Creating MercadoPago preference with data:', preferenceData);
@@ -64,7 +73,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         id: preference.id,
-        init_point: `https://sandbox.mercadopago.com.pe/checkout/v1/redirect?pref_id=${preference.id}`,
+        init_point: preference.sandbox_init_point,
         sandbox_init_point: preference.sandbox_init_point
       }),
       {
