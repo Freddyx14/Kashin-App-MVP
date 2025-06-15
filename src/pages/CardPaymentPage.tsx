@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
@@ -15,23 +14,78 @@ export default function CardPaymentPage() {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
+  const [dni, setDni] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
 
-  const handlePayment = () => {
-    // Validate form
-    if (!cardName || !cardNumber || !expiry || !cvv) {
+  useEffect(() => {
+    if (!window.MercadoPago && typeof window !== "undefined") {
+      const script = document.createElement("script");
+      script.src = "https://sdk.mercadopago.com/js/v2";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  const handlePayment = async () => {
+    if (!cardName || !cardNumber || !expiry || !cvv || !dni) {
       toast.error("Por favor complete todos los campos");
       return;
     }
 
     setIsProcessing(true);
-    toast("💳 Pago iniciado, tu pago está siendo procesado...");
-    
-    // Simulate processing delay
-    setTimeout(() => {
-      navigate("/pagar/exito");
-    }, 5000);
+    toast("💳 Procesando tu pago...");
+
+    const mp = new window.MercadoPago("TEST-177b782c-c205-4a22-a9cf-c012b6eebc53");
+    const expiration = expiry.split("/");
+    const formData = {
+      cardNumber,
+      cardholderName: cardName,
+      cardExpirationMonth: expiration[0],
+      cardExpirationYear: "20" + expiration[1],
+      securityCode: cvv,
+      identificationType: "DNI",
+      identificationNumber: dni,
+    };
+
+    try {
+      const { id: token } = await mp.card.createToken({ card: formData }).then(res => res.body);
+
+      const response = await fetch("https://api.mercadopago.com/v1/payments", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer TEST-4917101840137683-061503-5ff0359d778336bd9985af07b2323238-519329860",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          transaction_amount: 65,
+          payment_method_id: "visa",
+          installments: 1,
+          payer: {
+            email: "test_user_123456@testuser.com",
+            identification: {
+              type: "DNI",
+              number: dni,
+            },
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.status === "approved") {
+        toast.success("✅ ¡Pago aprobado!");
+        navigate("/pagar/exito");
+      } else {
+        toast.error("❌ Error en el pago: " + result.status_detail);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("❌ Hubo un problema procesando el pago");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -94,6 +148,17 @@ export default function CardPaymentPage() {
                 <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               </div>
             </div>
+
+            <div>
+              <Label htmlFor="dni">DNI</Label>
+              <Input
+                id="dni"
+                placeholder="12345678"
+                value={dni}
+                onChange={(e) => setDni(e.target.value.replace(/\D/g, ''))}
+                className="mt-1"
+              />
+            </div>
             
             <div className="flex gap-4">
               <div className="w-1/2">
@@ -139,22 +204,18 @@ export default function CardPaymentPage() {
               </div>
             </div>
           </form>
-          
+
           <div className="mt-6">
             <p className="text-center text-sm text-gray-500 flex items-center justify-center gap-2 mb-6">
               <Lock size={16} />
               Tu información está cifrada y protegida
             </p>
           </div>
-          
-          <PaymentSummary
-            concept="Pago de cuota"
-            amount={65.00}
-            isGratis={true}
-          />
+
+          <PaymentSummary concept="Pago de cuota" amount={65.00} isGratis={true} />
         </div>
       </div>
-      
+
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
         <Button 
           className="w-full bg-app-blue hover:bg-app-blue/90"
@@ -164,7 +225,7 @@ export default function CardPaymentPage() {
           {isProcessing ? "Procesando..." : "Pagar ahora"}
         </Button>
       </div>
-      
+
       <HelpButton />
     </div>
   );
