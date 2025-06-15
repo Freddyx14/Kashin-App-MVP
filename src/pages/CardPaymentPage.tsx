@@ -30,9 +30,23 @@ export default function CardPaymentPage() {
       const script = document.createElement("script");
       script.src = "https://sdk.mercadopago.com/js/v2";
       script.async = true;
+      script.onload = () => {
+        console.log("MercadoPago SDK loaded successfully");
+      };
+      script.onerror = () => {
+        console.error("Failed to load MercadoPago SDK");
+      };
       document.head.appendChild(script);
     }
   }, []);
+
+  const detectCardType = (cardNumber: string) => {
+    const cleanNumber = cardNumber.replace(/\s/g, '');
+    if (cleanNumber.startsWith('4')) return 'visa';
+    if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) return 'master';
+    if (cleanNumber.startsWith('3')) return 'amex';
+    return 'visa'; // default fallback
+  };
 
   const handlePayment = async () => {
     if (isLocalhost) {
@@ -45,56 +59,103 @@ export default function CardPaymentPage() {
       return;
     }
 
-    setIsProcessing(true);
-    toast("💳 Procesando tu pago...");
+    if (!window.MercadoPago) {
+      toast.error("Error: SDK de MercadoPago no está cargado");
+      return;
+    }
 
-    const mp = new window.MercadoPago("TEST-177b782c-c205-4a22-a9cf-c012b6eebc53");
-    const expiration = expiry.split("/");
-    const formData = {
-      cardNumber,
-      cardholderName: cardName,
-      cardExpirationMonth: expiration[0],
-      cardExpirationYear: "20" + expiration[1],
-      securityCode: cvv,
-      identificationType: "DNI",
-      identificationNumber: dni,
-    };
+    setIsProcessing(true);
+    console.log("Iniciando proceso de pago...");
 
     try {
-      const { id: token } = await mp.card.createToken({ card: formData }).then(res => res.body);
+      // Initialize MercadoPago with public key
+      const mp = new window.MercadoPago("TEST-177b782c-c205-4a22-a9cf-c012b6eebc53");
+      
+      // Prepare card data
+      const expiration = expiry.split("/");
+      const cardData = {
+        cardNumber: cardNumber.replace(/\s/g, ''),
+        cardholderName: cardName,
+        cardExpirationMonth: expiration[0],
+        cardExpirationYear: "20" + expiration[1],
+        securityCode: cvv,
+        identificationType: "DNI",
+        identificationNumber: dni,
+      };
+
+      console.log("Creando token con datos:", { ...cardData, securityCode: "***" });
+
+      // Create card token
+      const tokenResponse = await mp.card.createToken({
+        card: cardData
+      });
+
+      console.log("Respuesta del token:", tokenResponse);
+
+      if (!tokenResponse || tokenResponse.error) {
+        const errorMessage = tokenResponse?.error?.message || "Error creando token de tarjeta";
+        console.error("Error en token:", tokenResponse?.error);
+        toast.error(`Error: ${errorMessage}`);
+        return;
+      }
+
+      const token = tokenResponse.body?.id;
+      if (!token) {
+        toast.error("No se pudo generar el token de la tarjeta");
+        return;
+      }
+
+      console.log("Token creado exitosamente:", token);
+
+      // Detect payment method
+      const paymentMethodId = detectCardType(cardNumber);
+      console.log("Método de pago detectado:", paymentMethodId);
+
+      // Create payment
+      const paymentData = {
+        token,
+        transaction_amount: 65,
+        payment_method_id: paymentMethodId,
+        installments: 1,
+        payer: {
+          email: "test_user_123456@testuser.com",
+          identification: {
+            type: "DNI",
+            number: dni,
+          },
+          first_name: cardName.split(' ')[0] || cardName,
+          last_name: cardName.split(' ').slice(1).join(' ') || "Usuario"
+        },
+        description: "Pago de cuota - Prestamos Kashin"
+      };
+
+      console.log("Enviando pago con datos:", paymentData);
 
       const response = await fetch("https://api.mercadopago.com/v1/payments", {
         method: "POST",
         headers: {
-          Authorization: "Bearer TEST-4917101840137683-061503-5ff0359d778336bd9985af07b2323238-519329860",
+          "Authorization": "Bearer TEST-4917101840137683-061503-5ff0359d778336bd9985af07b2323238-519329860",
           "Content-Type": "application/json",
+          "X-Idempotency-Key": `payment-${Date.now()}-${Math.random()}`
         },
-        body: JSON.stringify({
-          token,
-          transaction_amount: 65,
-          payment_method_id: "visa",
-          installments: 1,
-          payer: {
-            email: "test_user_123456@testuser.com",
-            identification: {
-              type: "DNI",
-              number: dni,
-            },
-          },
-        }),
+        body: JSON.stringify(paymentData),
       });
 
       const result = await response.json();
+      console.log("Respuesta del pago:", result);
 
-      if (result.status === "approved") {
-        toast.success("✅ ¡Pago aprobado!");
+      if (response.ok && result.status === "approved") {
+        console.log("Pago aprobado exitosamente");
+        toast.success("✅ ¡Pago aprobado exitosamente!");
         navigate("/pagar/exito");
       } else {
-        toast.error("❌ Error en el pago: " + result.status_detail);
+        const errorDetail = result.message || result.status_detail || "Error desconocido";
+        console.error("Error en el pago:", result);
+        toast.error(`❌ Error en el pago: ${errorDetail}`);
       }
     } catch (error) {
-      console.error(error);
-      toast.error("❌ Hubo un problema procesando el pago");
+      console.error("Error procesando el pago:", error);
+      toast.error("❌ Hubo un problema procesando el pago. Revisa los datos e intenta nuevamente.");
     } finally {
       setIsProcessing(false);
     }
