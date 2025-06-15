@@ -18,6 +18,7 @@ export default function CardPaymentPage() {
   const [dni, setDni] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLocalhost, setIsLocalhost] = useState(false);
+  const [mpInstance, setMpInstance] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,24 +27,48 @@ export default function CardPaymentPage() {
     const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname.includes("localhost");
     setIsLocalhost(isLocal);
 
-    if (!window.MercadoPago && typeof window !== "undefined") {
+    // Load MercadoPago SDK
+    const loadMercadoPagoSDK = () => {
+      if (window.MercadoPago) {
+        console.log("MercadoPago SDK ya está cargado");
+        initializeMercadoPago();
+        return;
+      }
+
       const script = document.createElement("script");
       script.src = "https://sdk.mercadopago.com/js/v2";
       script.async = true;
       script.onload = () => {
-        console.log("MercadoPago SDK loaded successfully");
+        console.log("MercadoPago SDK cargado exitosamente");
+        initializeMercadoPago();
       };
       script.onerror = () => {
-        console.error("Failed to load MercadoPago SDK");
+        console.error("Error al cargar el SDK de MercadoPago");
+        toast.error("Error al cargar el sistema de pagos");
       };
       document.head.appendChild(script);
-    }
+    };
+
+    const initializeMercadoPago = () => {
+      try {
+        if (window.MercadoPago) {
+          const mp = new window.MercadoPago("TEST-177b782c-c205-4a22-a9cf-c012b6eebc53");
+          setMpInstance(mp);
+          console.log("MercadoPago inicializado correctamente");
+        }
+      } catch (error) {
+        console.error("Error inicializando MercadoPago:", error);
+        toast.error("Error al inicializar el sistema de pagos");
+      }
+    };
+
+    loadMercadoPagoSDK();
   }, []);
 
   const detectCardType = (cardNumber: string) => {
     const cleanNumber = cardNumber.replace(/\s/g, '');
     if (cleanNumber.startsWith('4')) return 'visa';
-    if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) return 'master';
+    if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) return 'mastercard';
     if (cleanNumber.startsWith('3')) return 'amex';
     return 'visa'; // default fallback
   };
@@ -59,8 +84,8 @@ export default function CardPaymentPage() {
       return;
     }
 
-    if (!window.MercadoPago) {
-      toast.error("Error: SDK de MercadoPago no está cargado");
+    if (!mpInstance) {
+      toast.error("Error: Sistema de pagos no inicializado. Recarga la página.");
       return;
     }
 
@@ -68,11 +93,13 @@ export default function CardPaymentPage() {
     console.log("Iniciando proceso de pago...");
 
     try {
-      // Initialize MercadoPago with public key
-      const mp = new window.MercadoPago("TEST-177b782c-c205-4a22-a9cf-c012b6eebc53");
-      
       // Prepare card data
       const expiration = expiry.split("/");
+      if (expiration.length !== 2) {
+        toast.error("Formato de fecha de expiración inválido");
+        return;
+      }
+
       const cardData = {
         cardNumber: cardNumber.replace(/\s/g, ''),
         cardholderName: cardName,
@@ -85,21 +112,31 @@ export default function CardPaymentPage() {
 
       console.log("Creando token con datos:", { ...cardData, securityCode: "***" });
 
-      // Create card token
-      const tokenResponse = await mp.card.createToken({
-        card: cardData
+      // Create card token using the correct API
+      const tokenResponse = await new Promise((resolve, reject) => {
+        if (mpInstance && mpInstance.createCardToken) {
+          mpInstance.createCardToken(cardData, (error: any, token: any) => {
+            if (error) {
+              console.error("Error creando token:", error);
+              reject(error);
+            } else {
+              console.log("Token creado exitosamente:", token);
+              resolve(token);
+            }
+          });
+        } else {
+          reject(new Error("Método createCardToken no disponible"));
+        }
       });
 
-      console.log("Respuesta del token:", tokenResponse);
-
-      if (!tokenResponse || tokenResponse.error) {
-        const errorMessage = tokenResponse?.error?.message || "Error creando token de tarjeta";
-        console.error("Error en token:", tokenResponse?.error);
+      if (!tokenResponse || (tokenResponse as any).error) {
+        const errorMessage = (tokenResponse as any)?.error?.message || "Error creando token de tarjeta";
+        console.error("Error en token:", (tokenResponse as any)?.error);
         toast.error(`Error: ${errorMessage}`);
         return;
       }
 
-      const token = tokenResponse.body?.id;
+      const token = (tokenResponse as any).id;
       if (!token) {
         toast.error("No se pudo generar el token de la tarjeta");
         return;
@@ -313,9 +350,9 @@ export default function CardPaymentPage() {
         <Button 
           className="w-full bg-app-blue hover:bg-app-blue/90"
           onClick={handlePayment}
-          disabled={isProcessing || isLocalhost}
+          disabled={isProcessing || isLocalhost || !mpInstance}
         >
-          {isProcessing ? "Procesando..." : isLocalhost ? "No disponible en localhost" : "Pagar ahora"}
+          {isProcessing ? "Procesando..." : isLocalhost ? "No disponible en localhost" : !mpInstance ? "Cargando sistema de pagos..." : "Pagar ahora"}
         </Button>
       </div>
 
