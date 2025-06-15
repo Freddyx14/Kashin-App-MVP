@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
@@ -73,14 +72,133 @@ export default function CardPaymentPage() {
     return 'visa'; // default fallback
   };
 
+  const validateCardData = () => {
+    if (!cardName.trim()) {
+      toast.error("El nombre del titular es requerido");
+      return false;
+    }
+    
+    if (!cardNumber || cardNumber.replace(/\s/g, '').length < 13) {
+      toast.error("Número de tarjeta inválido");
+      return false;
+    }
+    
+    if (!expiry || expiry.length !== 5) {
+      toast.error("Fecha de expiración inválida (MM/AA)");
+      return false;
+    }
+    
+    if (!cvv || cvv.length < 3) {
+      toast.error("CVV inválido");
+      return false;
+    }
+    
+    if (!dni || dni.length < 8) {
+      toast.error("DNI inválido");
+      return false;
+    }
+    
+    return true;
+  };
+
+  const createPaymentToken = async () => {
+    return new Promise((resolve, reject) => {
+      const expiration = expiry.split("/");
+      
+      const cardData = {
+        cardNumber: cardNumber.replace(/\s/g, ''),
+        cardholderName: cardName.trim(),
+        cardExpirationMonth: expiration[0],
+        cardExpirationYear: "20" + expiration[1],
+        securityCode: cvv,
+        identificationType: "DNI",
+        identificationNumber: dni,
+      };
+
+      console.log("Creando token con datos:", { ...cardData, securityCode: "***", cardNumber: "****" });
+
+      // Set timeout for token creation
+      const timeoutId = setTimeout(() => {
+        reject(new Error("Timeout creando token de tarjeta"));
+      }, 15000);
+
+      if (mpInstance && typeof mpInstance.createCardToken === 'function') {
+        mpInstance.createCardToken(cardData, (error: any, token: any) => {
+          clearTimeout(timeoutId);
+          
+          if (error) {
+            console.error("Error creando token:", error);
+            reject(error);
+          } else if (token && token.id) {
+            console.log("Token creado exitosamente:", token.id);
+            resolve(token);
+          } else {
+            console.error("Token inválido recibido:", token);
+            reject(new Error("Token inválido"));
+          }
+        });
+      } else {
+        clearTimeout(timeoutId);
+        reject(new Error("SDK de MercadoPago no disponible"));
+      }
+    });
+  };
+
+  const processPayment = async (token: string) => {
+    const paymentMethodId = detectCardType(cardNumber);
+    
+    const paymentData = {
+      token,
+      transaction_amount: 65,
+      payment_method_id: paymentMethodId,
+      installments: 1,
+      payer: {
+        email: "test_user_63274564@testuser.com", // Email de prueba válido
+        identification: {
+          type: "DNI",
+          number: dni,
+        },
+        first_name: cardName.split(' ')[0] || cardName,
+        last_name: cardName.split(' ').slice(1).join(' ') || "Usuario"
+      },
+      description: "Pago de cuota - Prestamos Kashin"
+    };
+
+    console.log("Enviando pago con datos:", paymentData);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      const response = await fetch("https://api.mercadopago.com/v1/payments", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer TEST-4917101840137683-061503-5ff0359d778336bd9985af07b2323238-519329860",
+          "Content-Type": "application/json",
+          "X-Idempotency-Key": `payment-${Date.now()}-${Math.random()}`
+        },
+        body: JSON.stringify(paymentData),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      const result = await response.json();
+      console.log("Respuesta completa del pago:", result);
+
+      return { response, result };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  };
+
   const handlePayment = async () => {
     if (isLocalhost) {
       toast.error("⚠️ MercadoPago puede bloquear solicitudes desde localhost por CORS");
       return;
     }
 
-    if (!cardName || !cardNumber || !expiry || !cvv || !dni) {
-      toast.error("Por favor complete todos los campos");
+    if (!validateCardData()) {
       return;
     }
 
@@ -90,111 +208,60 @@ export default function CardPaymentPage() {
     }
 
     setIsProcessing(true);
-    console.log("Iniciando proceso de pago...");
+    console.log("=== INICIANDO PROCESO DE PAGO ===");
 
     try {
-      // Prepare card data
-      const expiration = expiry.split("/");
-      if (expiration.length !== 2) {
-        toast.error("Formato de fecha de expiración inválido");
-        return;
-      }
-
-      const cardData = {
-        cardNumber: cardNumber.replace(/\s/g, ''),
-        cardholderName: cardName,
-        cardExpirationMonth: expiration[0],
-        cardExpirationYear: "20" + expiration[1],
-        securityCode: cvv,
-        identificationType: "DNI",
-        identificationNumber: dni,
-      };
-
-      console.log("Creando token con datos:", { ...cardData, securityCode: "***" });
-
-      // Create card token using the correct API
-      const tokenResponse = await new Promise((resolve, reject) => {
-        if (mpInstance && mpInstance.createCardToken) {
-          mpInstance.createCardToken(cardData, (error: any, token: any) => {
-            if (error) {
-              console.error("Error creando token:", error);
-              reject(error);
-            } else {
-              console.log("Token creado exitosamente:", token);
-              resolve(token);
-            }
-          });
-        } else {
-          reject(new Error("Método createCardToken no disponible"));
-        }
-      });
-
-      if (!tokenResponse || (tokenResponse as any).error) {
-        const errorMessage = (tokenResponse as any)?.error?.message || "Error creando token de tarjeta";
-        console.error("Error en token:", (tokenResponse as any)?.error);
-        toast.error(`Error: ${errorMessage}`);
-        return;
-      }
-
+      // Step 1: Create token
+      console.log("Paso 1: Creando token...");
+      const tokenResponse = await createPaymentToken();
       const token = (tokenResponse as any).id;
+      
       if (!token) {
-        toast.error("No se pudo generar el token de la tarjeta");
-        return;
+        throw new Error("No se pudo generar el token de la tarjeta");
       }
 
       console.log("Token creado exitosamente:", token);
 
-      // Detect payment method
-      const paymentMethodId = detectCardType(cardNumber);
-      console.log("Método de pago detectado:", paymentMethodId);
+      // Step 2: Process payment
+      console.log("Paso 2: Procesando pago...");
+      const { response, result } = await processPayment(token);
 
-      // Create payment
-      const paymentData = {
-        token,
-        transaction_amount: 65,
-        payment_method_id: paymentMethodId,
-        installments: 1,
-        payer: {
-          email: "test_user_123456@testuser.com",
-          identification: {
-            type: "DNI",
-            number: dni,
-          },
-          first_name: cardName.split(' ')[0] || cardName,
-          last_name: cardName.split(' ').slice(1).join(' ') || "Usuario"
-        },
-        description: "Pago de cuota - Prestamos Kashin"
-      };
-
-      console.log("Enviando pago con datos:", paymentData);
-
-      const response = await fetch("https://api.mercadopago.com/v1/payments", {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer TEST-4917101840137683-061503-5ff0359d778336bd9985af07b2323238-519329860",
-          "Content-Type": "application/json",
-          "X-Idempotency-Key": `payment-${Date.now()}-${Math.random()}`
-        },
-        body: JSON.stringify(paymentData),
-      });
-
-      const result = await response.json();
-      console.log("Respuesta del pago:", result);
-
-      if (response.ok && result.status === "approved") {
-        console.log("Pago aprobado exitosamente");
-        toast.success("✅ ¡Pago aprobado exitosamente!");
-        navigate("/pagar/exito");
+      if (response.ok) {
+        if (result.status === "approved") {
+          console.log("✅ Pago aprobado exitosamente");
+          toast.success("✅ ¡Pago aprobado exitosamente!");
+          navigate("/pagar/exito");
+        } else if (result.status === "pending") {
+          console.log("⏳ Pago pendiente");
+          toast.success("⏳ Pago en proceso de verificación");
+          navigate("/pagar/exito");
+        } else {
+          const statusDetail = result.status_detail || "Estado desconocido";
+          console.error("❌ Pago rechazado:", result.status, statusDetail);
+          toast.error(`❌ Pago rechazado: ${statusDetail}`);
+        }
       } else {
-        const errorDetail = result.message || result.status_detail || "Error desconocido";
-        console.error("Error en el pago:", result);
-        toast.error(`❌ Error en el pago: ${errorDetail}`);
+        const errorMsg = result.message || result.cause?.[0]?.description || "Error en la API";
+        console.error("❌ Error HTTP:", response.status, errorMsg);
+        toast.error(`❌ Error: ${errorMsg}`);
       }
-    } catch (error) {
-      console.error("Error procesando el pago:", error);
-      toast.error("❌ Hubo un problema procesando el pago. Revisa los datos e intenta nuevamente.");
+
+    } catch (error: any) {
+      console.error("=== ERROR EN EL PROCESO DE PAGO ===", error);
+      
+      if (error.name === 'AbortError') {
+        toast.error("❌ Tiempo de espera agotado. Intenta nuevamente.");
+      } else if (error.message?.includes('CORS')) {
+        toast.error("❌ Error de conexión. Intenta desde un dominio válido.");
+      } else if (error.message?.includes('Timeout')) {
+        toast.error("❌ Tiempo de espera agotado. Intenta nuevamente.");
+      } else {
+        const errorMsg = error.message || "Error desconocido";
+        toast.error(`❌ Error procesando el pago: ${errorMsg}`);
+      }
     } finally {
       setIsProcessing(false);
+      console.log("=== PROCESO DE PAGO FINALIZADO ===");
     }
   };
 
