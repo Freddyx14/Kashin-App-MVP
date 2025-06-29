@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import UserHeader from "@/components/UserHeader";
 import BalanceCard from "@/components/BalanceCard";
@@ -9,7 +8,7 @@ import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
 import PaymentAlert from "@/components/PaymentAlert";
 import { Users, Banknote, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ interface UserProfile {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,13 +50,19 @@ export default function Dashboard() {
         console.error('Unexpected error:', error);
       } finally {
         setLoading(false);
-        // Mostrar el pop-up de alerta después de cargar
-        setShowPaymentAlert(true);
+        
+        // Solo mostrar el pop-up si viene de un login exitoso
+        // Verificamos si hay un estado que indique que viene del login
+        if (location.state?.fromLogin) {
+          setShowPaymentAlert(true);
+          // Limpiar el estado para que no se muestre de nuevo
+          window.history.replaceState({}, document.title);
+        }
       }
     };
 
     fetchUserProfile();
-  }, [user]);
+  }, [user, location]);
 
   const handleSignOut = async () => {
     try {

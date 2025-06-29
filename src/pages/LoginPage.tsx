@@ -39,7 +39,8 @@ export default function LoginPage() {
         }
       } else {
         toast.success("¡Bienvenido!");
-        navigate("/dashboard");
+        // Navegar al dashboard con estado para mostrar el pop-up
+        navigate("/dashboard", { state: { fromLogin: true } });
       }
     } catch (error) {
       console.error('Unexpected error:', error);

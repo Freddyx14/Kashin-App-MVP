@@ -15,12 +15,32 @@ export default function YapePaymentPage() {
   const [approvalCode, setApprovalCode] = useState("");
   const [showHelp, setShowHelp] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errors, setErrors] = useState({ phoneNumber: "", approvalCode: "" });
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    const newErrors = { phoneNumber: "", approvalCode: "" };
+    let isValid = true;
+
+    // Validar número de celular (exactamente 9 dígitos)
+    if (phoneNumber.length !== 9 || !/^\d{9}$/.test(phoneNumber)) {
+      newErrors.phoneNumber = "El número de celular es incorrecto";
+      isValid = false;
+    }
+
+    // Validar código de aprobación (exactamente 6 dígitos)
+    if (approvalCode.length !== 6 || !/^\d{6}$/.test(approvalCode)) {
+      newErrors.approvalCode = "Código de aprobación incorrecto.";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handlePayment = () => {
-    // Validate form
-    if (!phoneNumber || !approvalCode) {
-      toast.error("Por favor complete todos los campos");
+    // Validar formulario antes de proceder
+    if (!validateForm()) {
       return;
     }
 
@@ -56,11 +76,18 @@ export default function YapePaymentPage() {
                   const value = e.target.value.replace(/\D/g, '');
                   if (value.length <= 9) {
                     setPhoneNumber(value);
+                    // Limpiar error si el usuario está escribiendo
+                    if (errors.phoneNumber) {
+                      setErrors(prev => ({ ...prev, phoneNumber: "" }));
+                    }
                   }
                 }}
-                className="mt-1"
+                className={`mt-1 ${errors.phoneNumber ? 'border-red-500' : ''}`}
                 type="tel"
               />
+              {errors.phoneNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+              )}
             </div>
             
             <div>
@@ -69,9 +96,22 @@ export default function YapePaymentPage() {
                 id="approvalCode"
                 placeholder="Ingresa el código de Yape"
                 value={approvalCode}
-                onChange={(e) => setApprovalCode(e.target.value)}
-                className="mt-1"
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  if (value.length <= 6) {
+                    setApprovalCode(value);
+                    // Limpiar error si el usuario está escribiendo
+                    if (errors.approvalCode) {
+                      setErrors(prev => ({ ...prev, approvalCode: "" }));
+                    }
+                  }
+                }}
+                className={`mt-1 ${errors.approvalCode ? 'border-red-500' : ''}`}
+                type="tel"
               />
+              {errors.approvalCode && (
+                <p className="text-red-500 text-sm mt-1">{errors.approvalCode}</p>
+              )}
             </div>
             
             <div 
@@ -98,6 +138,7 @@ export default function YapePaymentPage() {
                     <li>Ve al menú principal</li>
                     <li>Selecciona "Aprobar pagos"</li>
                     <li>Copia el código mostrado</li>
+                    <li>Este código de aprobación tiene 6 dígitos.</li>
                   </ol>
                 </div>
               )}
