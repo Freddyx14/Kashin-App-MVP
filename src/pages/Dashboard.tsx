@@ -7,6 +7,7 @@ import LoanStatusCard from "@/components/LoanStatusCard";
 import TransactionItem from "@/components/TransactionItem";
 import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
+import PaymentAlert from "@/components/PaymentAlert";
 import { Users, Banknote, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const { user, signOut } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPaymentAlert, setShowPaymentAlert] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -48,6 +50,8 @@ export default function Dashboard() {
         console.error('Unexpected error:', error);
       } finally {
         setLoading(false);
+        // Mostrar el pop-up de alerta después de cargar
+        setShowPaymentAlert(true);
       }
     };
 
@@ -172,6 +176,12 @@ export default function Dashboard() {
         <HelpButton />
         <BottomNav />
       </div>
+
+      {/* Pop-up de alerta de pago */}
+      <PaymentAlert 
+        isOpen={showPaymentAlert} 
+        onClose={() => setShowPaymentAlert(false)} 
+      />
     </div>
   );
 }

@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import UserHeader from "@/components/UserHeader";
 import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
-import { ChevronRight, User, Shield, FileText, CreditCard, Phone, LogOut } from "lucide-react";
+import { ChevronRight, User, Shield, FileText, CreditCard, Phone, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -32,7 +33,8 @@ const MenuItem = ({ icon, title, onClick }: MenuItemProps) => (
 );
 
 export default function MorePage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,6 +63,15 @@ export default function MorePage() {
 
     fetchUserProfile();
   }, [user]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/welcome');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const getUserDisplayName = () => {
     if (userProfile) {
@@ -115,9 +126,14 @@ export default function MorePage() {
               onClick={() => {}}
             />
             <MenuItem 
+              icon={<Bell size={20} className="text-app-blue" />}
+              title="Recordatorios"
+              onClick={() => navigate("/recordatorios")}
+            />
+            <MenuItem 
               icon={<LogOut size={20} className="text-app-blue" />}
               title="Cerrar sesión"
-              onClick={() => {}}
+              onClick={handleSignOut}
             />
           </div>
           
