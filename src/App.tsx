@@ -18,6 +18,7 @@ import AgentPaymentPage from "./pages/AgentPaymentPage";
 import InvitePage from "./pages/InvitePage";
 import RewardsPage from "./pages/RewardsPage";
 import MorePage from "./pages/MorePage";
+import ReceiptPage from "./pages/ReceiptPage";
 import NotFound from "./pages/NotFound";
 import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
@@ -45,6 +46,11 @@ const App = () => {
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/comprobante/:id" element={
+                <ProtectedRoute>
+                  <ReceiptPage />
                 </ProtectedRoute>
               } />
               <Route path="/pagar" element={
