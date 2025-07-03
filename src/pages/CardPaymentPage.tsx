@@ -144,7 +144,15 @@ export default function CardPaymentPage() {
         <BackButton title="Pago con tarjeta" />
 
 
-        <iframe width="560" height="315" src="https://www.youtube.com/embed/CUP2o-8sXrQ?si=tgpQBLwJQtolFxZJ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+
+
+
+
+
+
+
 
 
 
@@ -152,7 +160,7 @@ export default function CardPaymentPage() {
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg text-white mb-6">
             <div className="flex justify-between items-center mb-8">
               <CreditCard size={32} />
-              <div className="text-sm">S/ 655555555.00</div>
+              <div className="text-sm">S/ 65.00</div>
             </div>
             <div className="mb-4">
               <div className="text-xs opacity-70">Número de Tarjeta</div>
