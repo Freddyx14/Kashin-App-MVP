@@ -142,7 +142,12 @@ export default function CardPaymentPage() {
     <div className="container mx-auto max-w-md bg-white min-h-screen pb-24">
       <div className="px-4">
         <BackButton title="Pago con tarjeta" />
+
         
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/CUP2o-8sXrQ?si=tgpQBLwJQtolFxZJ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+
         <div className="mt-8">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg text-white mb-6">
             <div className="flex justify-between items-center mb-8">
