@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import UserHeader from "@/components/UserHeader";
 import BalanceCard from "@/components/BalanceCard";
@@ -7,6 +8,7 @@ import TransactionItem from "@/components/TransactionItem";
 import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
 import PaymentAlert from "@/components/PaymentAlert";
+import LoanCalculator from "@/components/LoanCalculator";
 import { Users, Banknote, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,13 +24,40 @@ interface UserProfile {
   birth_date: string;
 }
 
+interface Loan {
+  id: string;
+  monto_prestamo: number;
+  fecha_solicitud: string;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPaymentAlert, setShowPaymentAlert] = useState(false);
+
+  const fetchUserLoans = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('prestamos')
+        .select('*')
+        .eq('id_usuario', user.id)
+        .order('fecha_solicitud', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching loans:', error);
+      } else if (data) {
+        setLoans(data);
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching loans:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -52,7 +81,6 @@ export default function Dashboard() {
         setLoading(false);
         
         // Solo mostrar el pop-up si viene de un login exitoso
-        // Verificamos si hay un estado que indique que viene del login
         if (location.state?.fromLogin) {
           setShowPaymentAlert(true);
           // Limpiar el estado para que no se muestre de nuevo
@@ -62,6 +90,7 @@ export default function Dashboard() {
     };
 
     fetchUserProfile();
+    fetchUserLoans();
   }, [user, location]);
 
   const handleSignOut = async () => {
@@ -82,6 +111,21 @@ export default function Dashboard() {
     return user?.email?.split('@')[0] || 'Usuario';
   };
 
+  const handleLoanCreated = () => {
+    fetchUserLoans(); // Recargar la lista de préstamos
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    };
+    return date.toLocaleDateString('es-ES', options)
+      .replace(/^\w/, (c) => c.toUpperCase());
+  };
+
   // Datos de ejemplo para el resto de la funcionalidad
   const userData = {
     availableBalance: 50.00,
@@ -94,16 +138,7 @@ export default function Dashboard() {
       paymentDate: "Domingo 25 de Mayo",
       installment: "1 de 1",
       amount: 65.00
-    },
-    transactions: [
-      {
-        id: "tx1",
-        type: "Préstamo Desembolsado",
-        description: "Préstamo inicial",
-        date: "Viernes 25 De Abril",
-        amount: 50.00
-      }
-    ]
+    }
   };
 
   if (loading) {
@@ -133,6 +168,9 @@ export default function Dashboard() {
         </div>
         
         <div className="px-4 pb-6">
+          {/* Calculadora de Préstamos */}
+          <LoanCalculator onLoanCreated={handleLoanCreated} />
+          
           <BalanceCard 
             availableBalance={userData.availableBalance}
             creditLine={userData.creditLine}
@@ -161,22 +199,25 @@ export default function Dashboard() {
             amount={userData.loan.amount}
           />
           
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-2">
-              Últimas transacciones
-            </h2>
-            
-            {userData.transactions.map((tx) => (
-              <TransactionItem
-                key={tx.id}
-                id={tx.id}
-                type={tx.type}
-                description={tx.description}
-                date={tx.date}
-                amount={tx.amount}
-              />
-            ))}
-          </div>
+          {/* Últimas transacciones - Solo mostrar si hay préstamos */}
+          {loans.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold flex items-center gap-2 mb-2">
+                Últimas transacciones
+              </h2>
+              
+              {loans.map((loan) => (
+                <TransactionItem
+                  key={loan.id}
+                  id={loan.id}
+                  type="Préstamo Desembolsado"
+                  description="Préstamo solicitado"
+                  date={formatDate(loan.fecha_solicitud)}
+                  amount={loan.monto_prestamo}
+                />
+              ))}
+            </div>
+          )}
         </div>
         
         <HelpButton />
