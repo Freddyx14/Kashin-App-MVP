@@ -15,7 +15,7 @@ export default function WelcomePage() {
                 <img 
                   src="/lovable-uploads/b6290494-22eb-4874-8582-690064d80b55.png" 
                   alt="Logo de Kashin" 
-                  className="h-8 w-10 mr-2"
+                  className="h-8.5 w-10 mr-2"
                 />
                 <span className="text-app-blue">kashin</span>
               </span>,
