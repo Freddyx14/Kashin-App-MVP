@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import UserHeader from "@/components/UserHeader";
-import BalanceCard from "@/components/BalanceCard";
 import PromoCard from "@/components/PromoCard";
 import LoanStatusCard from "@/components/LoanStatusCard";
 import TransactionItem from "@/components/TransactionItem";
@@ -126,14 +125,6 @@ export default function Dashboard() {
       .replace(/^\w/, (c) => c.toUpperCase());
   };
 
-  // Datos de ejemplo para el resto de la funcionalidad
-  const userData = {
-    availableBalance: 50.00,
-    creditLine: 100.00,
-    points: 0,
-    maxPoints: 750
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-app-gray">
@@ -163,13 +154,6 @@ export default function Dashboard() {
         <div className="px-4 pb-6">
           {/* Calculadora de Préstamos */}
           <LoanCalculator onLoanCreated={handleLoanCreated} />
-          
-          <BalanceCard 
-            availableBalance={userData.availableBalance}
-            creditLine={userData.creditLine}
-            points={userData.points}
-            maxPoints={userData.maxPoints}
-          />
           
           <div className="grid grid-cols-2 gap-4 my-6">
             <PromoCard 
