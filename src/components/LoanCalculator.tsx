@@ -6,6 +6,7 @@ import { Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import PaymentMethodModal from "./PaymentMethodModal";
 
 interface LoanCalculatorProps {
   onLoanCreated: () => void;
@@ -14,13 +15,19 @@ interface LoanCalculatorProps {
 export default function LoanCalculator({ onLoanCreated }: LoanCalculatorProps) {
   const [loanAmount, setLoanAmount] = useState([200]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { user } = useAuth();
 
-  const handleLoanRequest = async () => {
+  const handleLoanRequest = () => {
     if (!user) {
       toast.error("Debes estar autenticado para solicitar un préstamo");
       return;
     }
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentConfirm = async (paymentMethod: string, paymentDetail: string) => {
+    if (!user) return;
 
     setIsLoading(true);
     
@@ -29,7 +36,10 @@ export default function LoanCalculator({ onLoanCreated }: LoanCalculatorProps) {
         .from('prestamos')
         .insert({
           id_usuario: user.id,
-          monto_prestamo: loanAmount[0]
+          monto_prestamo: loanAmount[0],
+          metodo_pago: paymentMethod,
+          detalle_pago: paymentDetail,
+          estado: 'Procesando'
         });
 
       if (error) {
@@ -37,7 +47,7 @@ export default function LoanCalculator({ onLoanCreated }: LoanCalculatorProps) {
         toast.error("Error al solicitar el préstamo");
       } else {
         toast.success(`Préstamo de S/ ${loanAmount[0]} solicitado exitosamente`);
-        onLoanCreated(); // Actualizar la lista de transacciones
+        onLoanCreated();
       }
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -48,39 +58,48 @@ export default function LoanCalculator({ onLoanCreated }: LoanCalculatorProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Calculator size={20} className="text-app-blue" />
-        <h2 className="text-lg font-semibold text-gray-900">Calculadora de Préstamos</h2>
-      </div>
-      
-      <div className="space-y-4">
-        <div>
-          <p className="text-center text-2xl font-bold text-app-blue mb-2">
-            Monto seleccionado: S/ {loanAmount[0]}
-          </p>
-          <Slider
-            value={loanAmount}
-            onValueChange={setLoanAmount}
-            max={800}
-            min={50}
-            step={50}
-            className="w-full"
-          />
-          <div className="flex justify-between text-sm text-gray-500 mt-2">
-            <span>S/ 50</span>
-            <span>S/ 800</span>
-          </div>
+    <>
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Calculator size={20} className="text-app-blue" />
+          <h2 className="text-lg font-semibold text-gray-900">Calculadora de Préstamos</h2>
         </div>
         
-        <Button 
-          onClick={handleLoanRequest}
-          disabled={isLoading}
-          className="w-full bg-app-blue hover:bg-app-blue/90 py-3 text-base font-medium"
-        >
-          {isLoading ? "Procesando..." : "Pedir préstamo"}
-        </Button>
+        <div className="space-y-4">
+          <div>
+            <p className="text-center text-2xl font-bold text-app-blue mb-2">
+              Monto seleccionado: S/ {loanAmount[0]}
+            </p>
+            <Slider
+              value={loanAmount}
+              onValueChange={setLoanAmount}
+              max={800}
+              min={50}
+              step={50}
+              className="w-full"
+            />
+            <div className="flex justify-between text-sm text-gray-500 mt-2">
+              <span>S/ 50</span>
+              <span>S/ 800</span>
+            </div>
+          </div>
+          
+          <Button 
+            onClick={handleLoanRequest}
+            disabled={isLoading}
+            className="w-full bg-app-blue hover:bg-app-blue/90 py-3 text-base font-medium"
+          >
+            {isLoading ? "Procesando..." : "Pedir préstamo"}
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={handlePaymentConfirm}
+        loanAmount={loanAmount[0]}
+      />
+    </>
   );
 }

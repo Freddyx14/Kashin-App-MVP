@@ -12,23 +12,32 @@ export type Database = {
       prestamos: {
         Row: {
           created_at: string
+          detalle_pago: string | null
+          estado: string | null
           fecha_solicitud: string
           id: string
           id_usuario: string
+          metodo_pago: string | null
           monto_prestamo: number
         }
         Insert: {
           created_at?: string
+          detalle_pago?: string | null
+          estado?: string | null
           fecha_solicitud?: string
           id?: string
           id_usuario: string
+          metodo_pago?: string | null
           monto_prestamo: number
         }
         Update: {
           created_at?: string
+          detalle_pago?: string | null
+          estado?: string | null
           fecha_solicitud?: string
           id?: string
           id_usuario?: string
+          metodo_pago?: string | null
           monto_prestamo?: number
         }
         Relationships: []
