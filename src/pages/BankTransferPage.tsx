@@ -1,11 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BackButton from "@/components/ui/BackButton";
 import HelpButton from "@/components/HelpButton";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Copy, Landmark } from "lucide-react";
-import { toast } from "sonner";
+import { useNavigate, useLocation } from "react-router-dom";
 import PaymentSummary from "@/components/PaymentSummary";
 
 interface BankOption {
@@ -15,8 +13,27 @@ interface BankOption {
   accountName: string;
 }
 
+interface PaymentData {
+  loanData: any;
+  paymentType: "single" | "full";
+  paymentInfo: {
+    date: string;
+    installment: string;
+    amount: number;
+  };
+  daysLeft: number;
+}
+
 export default function BankTransferPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+
+  useEffect(() => {
+    if (location.state) {
+      setPaymentData(location.state as PaymentData);
+    }
+  }, [location.state]);
   
   const banks: BankOption[] = [
     {
@@ -38,15 +55,29 @@ export default function BankTransferPage() {
       accountName: "Kashin SAC"
     }
   ];
-
-  const copyToClipboard = (text: string, message: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(message);
-  };
   
   const handleGenerateCode = (bankId: string) => {
-    navigate(`/pagar/codigo/${bankId}`);
+    navigate(`/pagar/codigo/${bankId}`, { state: paymentData });
   };
+
+  if (!paymentData) {
+    return (
+      <div className="container mx-auto max-w-md bg-white min-h-screen">
+        <div className="px-4">
+          <BackButton title="Transferencia bancaria" />
+          <div className="text-center mt-8">
+            <p className="text-gray-600">No se encontraron datos del pago</p>
+            <Button 
+              onClick={() => navigate('/dashboard')}
+              className="mt-4 bg-app-blue hover:bg-app-blue/90"
+            >
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-md bg-white min-h-screen pb-24">
@@ -70,7 +101,6 @@ export default function BankTransferPage() {
                   <h3 className="font-medium">{bank.name}</h3>
                 </div>
                 
-                
                 <Button 
                   className="w-full"
                   variant="outline"
@@ -84,7 +114,7 @@ export default function BankTransferPage() {
           
           <PaymentSummary
             concept="Pago de cuota"
-            amount={65.00}
+            amount={paymentData.paymentInfo.amount}
             isGratis={true}
           />
         </div>

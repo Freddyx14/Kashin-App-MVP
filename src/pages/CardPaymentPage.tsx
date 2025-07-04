@@ -4,16 +4,29 @@ import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import HelpButton from "@/components/HelpButton";
 import { CreditCard, Calendar, Lock } from "lucide-react";
 import { toast } from "sonner";
 import PaymentSummary from "@/components/PaymentSummary";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ValidationErrors {
   cardNumber?: string;
   expiry?: string;
   cvv?: string;
+}
+
+interface PaymentData {
+  loanData: any;
+  paymentType: "single" | "full";
+  paymentInfo: {
+    date: string;
+    installment: string;
+    amount: number;
+  };
+  daysLeft: number;
 }
 
 export default function CardPaymentPage() {
@@ -23,7 +36,16 @@ export default function CardPaymentPage() {
   const [cvv, setCvv] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (location.state) {
+      setPaymentData(location.state as PaymentData);
+    }
+  }, [location.state]);
 
   const validateCardNumber = (number: string): string | undefined => {
     const cleanNumber = number.replace(/\s/g, '');
@@ -40,7 +62,7 @@ export default function CardPaymentPage() {
 
     const [month, year] = expiryDate.split('/');
     const currentDate = new Date();
-    const currentYear = currentDate.getFullYear() % 100; // Últimos 2 dígitos
+    const currentYear = currentDate.getFullYear() % 100;
     const currentMonth = currentDate.getMonth() + 1;
 
     const expMonth = parseInt(month);
@@ -80,8 +102,43 @@ export default function CardPaymentPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePayment = () => {
-    // Validate form
+  const generatePaymentReference = () => {
+    const timestamp = new Date().getTime();
+    return `PAG-${timestamp}`;
+  };
+
+  const registerPayment = async () => {
+    if (!user || !paymentData) return null;
+
+    const referencia = generatePaymentReference();
+    const tipoPage = paymentData.paymentType === "single" ? "cuota_individual" : "pago_completo";
+
+    try {
+      const { error } = await supabase
+        .from('pagos_cuotas')
+        .insert({
+          id_usuario: user.id,
+          id_prestamo: paymentData.loanData.id,
+          tipo_pago: tipoPage,
+          monto_pagado: paymentData.paymentInfo.amount,
+          metodo_pago: 'Tarjeta de débito',
+          detalle_pago: `****${cardNumber.slice(-4)}`,
+          referencia_pago: referencia
+        });
+
+      if (error) {
+        console.error('Error registering payment:', error);
+        return null;
+      }
+
+      return referencia;
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      return null;
+    }
+  };
+
+  const handlePayment = async () => {
     if (!cardName || !cardNumber || !expiry || !cvv) {
       toast.error("Por favor complete todos los campos");
       return;
@@ -92,20 +149,36 @@ export default function CardPaymentPage() {
       return;
     }
 
+    if (!paymentData) {
+      toast.error("No se encontraron datos del pago");
+      return;
+    }
+
     setIsProcessing(true);
     toast("💳 Pago iniciado, tu pago está siendo procesado...");
     
-    // Simulate processing delay
-    setTimeout(() => {
-      navigate("/pagar/exito");
-    }, 5000);
+    setTimeout(async () => {
+      const referencia = await registerPayment();
+      
+      if (referencia) {
+        navigate("/pagar/exito", { 
+          state: { 
+            paymentData,
+            referencia,
+            metodo: 'Tarjeta de débito'
+          } 
+        });
+      } else {
+        toast.error("Error al procesar el pago");
+        setIsProcessing(false);
+      }
+    }, 3000);
   };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
     if (value.length <= 16) {
       setCardNumber(value);
-      // Clear error when user starts typing
       if (errors.cardNumber) {
         setErrors(prev => ({ ...prev, cardNumber: undefined }));
       }
@@ -120,7 +193,6 @@ export default function CardPaymentPage() {
       } else {
         setExpiry(value);
       }
-      // Clear error when user starts typing
       if (errors.expiry) {
         setErrors(prev => ({ ...prev, expiry: undefined }));
       }
@@ -131,12 +203,30 @@ export default function CardPaymentPage() {
     const value = e.target.value.replace(/\D/g, '');
     if (value.length <= 3) {
       setCvv(value);
-      // Clear error when user starts typing
       if (errors.cvv) {
         setErrors(prev => ({ ...prev, cvv: undefined }));
       }
     }
   };
+
+  if (!paymentData) {
+    return (
+      <div className="container mx-auto max-w-md bg-white min-h-screen">
+        <div className="px-4">
+          <BackButton title="Pago con tarjeta" />
+          <div className="text-center mt-8">
+            <p className="text-gray-600">No se encontraron datos del pago</p>
+            <Button 
+              onClick={() => navigate('/dashboard')}
+              className="mt-4 bg-app-blue hover:bg-app-blue/90"
+            >
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-md bg-white min-h-screen pb-24">
@@ -147,7 +237,7 @@ export default function CardPaymentPage() {
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg text-white mb-6">
             <div className="flex justify-between items-center mb-8">
               <CreditCard size={32} />
-              <div className="text-sm">S/ 65.00</div>
+              <div className="text-sm">S/ {paymentData.paymentInfo.amount.toFixed(2)}</div>
             </div>
             <div className="mb-4">
               <div className="text-xs opacity-70">Número de Tarjeta</div>
@@ -246,7 +336,7 @@ export default function CardPaymentPage() {
           
           <PaymentSummary
             concept="Pago de cuota"
-            amount={65.00}
+            amount={paymentData.paymentInfo.amount}
             isGratis={true}
           />
         </div>

@@ -1,14 +1,27 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import HelpButton from "@/components/HelpButton";
 import { Phone, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import PaymentSummary from "@/components/PaymentSummary";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface PaymentData {
+  loanData: any;
+  paymentType: "single" | "full";
+  paymentInfo: {
+    date: string;
+    installment: string;
+    amount: number;
+  };
+  daysLeft: number;
+}
 
 export default function YapePaymentPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -16,19 +29,26 @@ export default function YapePaymentPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState({ phoneNumber: "", approvalCode: "" });
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (location.state) {
+      setPaymentData(location.state as PaymentData);
+    }
+  }, [location.state]);
 
   const validateForm = () => {
     const newErrors = { phoneNumber: "", approvalCode: "" };
     let isValid = true;
 
-    // Validar número de celular (exactamente 9 dígitos)
     if (phoneNumber.length !== 9 || !/^\d{9}$/.test(phoneNumber)) {
       newErrors.phoneNumber = "El número de celular es incorrecto";
       isValid = false;
     }
 
-    // Validar código de aprobación (exactamente 6 dígitos)
     if (approvalCode.length !== 6 || !/^\d{6}$/.test(approvalCode)) {
       newErrors.approvalCode = "Código de aprobación incorrecto.";
       isValid = false;
@@ -38,20 +58,91 @@ export default function YapePaymentPage() {
     return isValid;
   };
 
-  const handlePayment = () => {
-    // Validar formulario antes de proceder
+  const generatePaymentReference = () => {
+    const timestamp = new Date().getTime();
+    return `YAPE-${timestamp}`;
+  };
+
+  const registerPayment = async () => {
+    if (!user || !paymentData) return null;
+
+    const referencia = generatePaymentReference();
+    const tipoPage = paymentData.paymentType === "single" ? "cuota_individual" : "pago_completo";
+
+    try {
+      const { error } = await supabase
+        .from('pagos_cuotas')
+        .insert({
+          id_usuario: user.id,
+          id_prestamo: paymentData.loanData.id,
+          tipo_pago: tipoPage,
+          monto_pagado: paymentData.paymentInfo.amount,
+          metodo_pago: 'Yape',
+          detalle_pago: phoneNumber,
+          referencia_pago: referencia
+        });
+
+      if (error) {
+        console.error('Error registering payment:', error);
+        return null;
+      }
+
+      return referencia;
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      return null;
+    }
+  };
+
+  const handlePayment = async () => {
     if (!validateForm()) {
+      return;
+    }
+
+    if (!paymentData) {
+      toast.error("No se encontraron datos del pago");
       return;
     }
 
     setIsProcessing(true);
     toast("📲 Pago con Yape iniciado, estamos procesando tu pago con Yape...");
     
-    // Simulate processing delay
-    setTimeout(() => {
-      navigate("/pagar/exito");
-    }, 5000);
+    setTimeout(async () => {
+      const referencia = await registerPayment();
+      
+      if (referencia) {
+        navigate("/pagar/exito", { 
+          state: { 
+            paymentData,
+            referencia,
+            metodo: 'Yape'
+          } 
+        });
+      } else {
+        toast.error("Error al procesar el pago");
+        setIsProcessing(false);
+      }
+    }, 3000);
   };
+
+  if (!paymentData) {
+    return (
+      <div className="container mx-auto max-w-md bg-white min-h-screen">
+        <div className="px-4">
+          <BackButton title="Pago con Yape" />
+          <div className="text-center mt-8">
+            <p className="text-gray-600">No se encontraron datos del pago</p>
+            <Button 
+              onClick={() => navigate('/dashboard')}
+              className="mt-4 bg-app-blue hover:bg-app-blue/90"
+            >
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-md bg-white min-h-screen pb-24">
@@ -76,7 +167,6 @@ export default function YapePaymentPage() {
                   const value = e.target.value.replace(/\D/g, '');
                   if (value.length <= 9) {
                     setPhoneNumber(value);
-                    // Limpiar error si el usuario está escribiendo
                     if (errors.phoneNumber) {
                       setErrors(prev => ({ ...prev, phoneNumber: "" }));
                     }
@@ -100,7 +190,6 @@ export default function YapePaymentPage() {
                   const value = e.target.value.replace(/\D/g, '');
                   if (value.length <= 6) {
                     setApprovalCode(value);
-                    // Limpiar error si el usuario está escribiendo
                     if (errors.approvalCode) {
                       setErrors(prev => ({ ...prev, approvalCode: "" }));
                     }
@@ -148,7 +237,7 @@ export default function YapePaymentPage() {
           <div className="mt-6">
             <PaymentSummary
               concept="Pago de cuota"
-              amount={65.00}
+              amount={paymentData.paymentInfo.amount}
               isGratis={true}
             />
           </div>

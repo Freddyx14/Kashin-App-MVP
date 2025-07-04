@@ -9,51 +9,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      pagos_cuotas: {
+        Row: {
+          created_at: string
+          detalle_pago: string | null
+          fecha_pago: string
+          id: string
+          id_prestamo: string
+          id_usuario: string
+          metodo_pago: string
+          monto_pagado: number
+          referencia_pago: string
+          tipo_pago: string
+        }
+        Insert: {
+          created_at?: string
+          detalle_pago?: string | null
+          fecha_pago?: string
+          id?: string
+          id_prestamo: string
+          id_usuario: string
+          metodo_pago: string
+          monto_pagado: number
+          referencia_pago: string
+          tipo_pago: string
+        }
+        Update: {
+          created_at?: string
+          detalle_pago?: string | null
+          fecha_pago?: string
+          id?: string
+          id_prestamo?: string
+          id_usuario?: string
+          metodo_pago?: string
+          monto_pagado?: number
+          referencia_pago?: string
+          tipo_pago?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_cuotas_id_prestamo_fkey"
+            columns: ["id_prestamo"]
+            isOneToOne: false
+            referencedRelation: "prestamos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prestamos: {
         Row: {
           created_at: string
+          cuotas_pagadas: number | null
           cuotas_totales: number | null
           detalle_pago: string | null
           dias_para_pago: number | null
           estado: string | null
           fecha_primer_pago: string | null
           fecha_solicitud: string
+          fecha_ultimo_pago: string | null
           id: string
           id_usuario: string
           interes: number | null
           metodo_pago: string | null
+          monto_pagado: number | null
           monto_por_cuota: number | null
           monto_prestado: number
           total_a_devolver: number | null
         }
         Insert: {
           created_at?: string
+          cuotas_pagadas?: number | null
           cuotas_totales?: number | null
           detalle_pago?: string | null
           dias_para_pago?: number | null
           estado?: string | null
           fecha_primer_pago?: string | null
           fecha_solicitud?: string
+          fecha_ultimo_pago?: string | null
           id?: string
           id_usuario: string
           interes?: number | null
           metodo_pago?: string | null
+          monto_pagado?: number | null
           monto_por_cuota?: number | null
           monto_prestado: number
           total_a_devolver?: number | null
         }
         Update: {
           created_at?: string
+          cuotas_pagadas?: number | null
           cuotas_totales?: number | null
           detalle_pago?: string | null
           dias_para_pago?: number | null
           estado?: string | null
           fecha_primer_pago?: string | null
           fecha_solicitud?: string
+          fecha_ultimo_pago?: string | null
           id?: string
           id_usuario?: string
           interes?: number | null
           metodo_pago?: string | null
+          monto_pagado?: number | null
           monto_por_cuota?: number | null
           monto_prestado?: number
           total_a_devolver?: number | null

@@ -18,6 +18,8 @@ interface LoanData {
   dias_para_pago: number;
   estado: string;
   created_at: string;
+  cuotas_pagadas?: number;
+  monto_pagado?: number;
 }
 
 export default function PaymentSelectionPage() {
@@ -50,7 +52,6 @@ export default function PaymentSelectionPage() {
     if (!loanData) return "";
     
     const firstPaymentDate = new Date(loanData.fecha_primer_pago);
-    // Assuming monthly payments, calculate the last payment date
     const lastPaymentDate = new Date(firstPaymentDate);
     lastPaymentDate.setMonth(lastPaymentDate.getMonth() + (loanData.cuotas_totales - 1));
     
@@ -60,17 +61,21 @@ export default function PaymentSelectionPage() {
   const getPaymentInfo = () => {
     if (!loanData) return { date: "", installment: "", amount: 0 };
 
+    const cuotasPagadas = loanData.cuotas_pagadas || 0;
+    const cuotasRestantes = loanData.cuotas_totales - cuotasPagadas;
+    const montoRestante = loanData.total_a_devolver - (loanData.monto_pagado || 0);
+
     if (paymentType === "single") {
       return {
         date: formatDate(loanData.fecha_primer_pago),
-        installment: "1 de " + loanData.cuotas_totales,
+        installment: `${cuotasPagadas + 1} de ${loanData.cuotas_totales}`,
         amount: loanData.monto_por_cuota
       };
     } else {
       return {
         date: calculateLastPaymentDate(),
-        installment: "Todas las cuotas",
-        amount: loanData.total_a_devolver
+        installment: "Todas las cuotas restantes",
+        amount: montoRestante
       };
     }
   };
@@ -78,18 +83,25 @@ export default function PaymentSelectionPage() {
   const paymentInfo = getPaymentInfo();
   
   const handlePaymentMethodSelect = (method: string) => {
+    const paymentData = {
+      loanData,
+      paymentType,
+      paymentInfo,
+      daysLeft
+    };
+
     switch(method) {
       case "card":
-        navigate("/pagar/tarjeta");
+        navigate("/pagar/tarjeta", { state: paymentData });
         break;
       case "yape":
-        navigate("/pagar/yape");
+        navigate("/pagar/yape", { state: paymentData });
         break;
       case "bank":
-        navigate("/pagar/transferencia");
+        navigate("/pagar/transferencia", { state: paymentData });
         break;
       case "agent":
-        navigate("/pagar/agentes");
+        navigate("/pagar/agentes", { state: paymentData });
         break;
       default:
         break;

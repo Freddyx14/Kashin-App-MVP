@@ -17,6 +17,8 @@ interface Loan {
   dias_para_pago: number;
   estado: string;
   created_at: string;
+  cuotas_pagadas?: number;
+  monto_pagado?: number;
 }
 
 export default function LoanStatusCard() {
@@ -47,7 +49,6 @@ export default function LoanStatusCard() {
         if (data) {
           setActiveLoan(data);
           
-          // Calcular días restantes
           const today = new Date();
           const firstPaymentDate = new Date(data.fecha_primer_pago);
           const diffTime = firstPaymentDate.getTime() - today.getTime();
@@ -100,7 +101,12 @@ export default function LoanStatusCard() {
     }
   };
 
-  if (!activeLoan) {
+  // Verificar si el préstamo está completamente pagado
+  const cuotasPagadas = activeLoan?.cuotas_pagadas || 0;
+  const cuotasTotales = activeLoan?.cuotas_totales || 0;
+  const isPaidOff = cuotasPagadas >= cuotasTotales;
+
+  if (!activeLoan || isPaidOff) {
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
         <div className="flex items-center gap-2 mb-4">
@@ -144,7 +150,7 @@ export default function LoanStatusCard() {
           </div>
           <div>
             <span className="text-gray-600">Cuotas:</span>
-            <div className="font-medium">1 de {activeLoan.cuotas_totales}</div>
+            <div className="font-medium">{cuotasPagadas + 1} de {activeLoan.cuotas_totales}</div>
           </div>
         </div>
         
@@ -177,9 +183,13 @@ export default function LoanStatusCard() {
               <span>Intereses:</span>
               <span>S/ {activeLoan.interes}</span>
             </div>
+            <div className="flex justify-between">
+              <span>Cuotas pagadas:</span>
+              <span>{cuotasPagadas} de {activeLoan.cuotas_totales}</span>
+            </div>
             <div className="flex justify-between font-medium">
-              <span>Total a devolver:</span>
-              <span>S/ {activeLoan.total_a_devolver}</span>
+              <span>Total restante:</span>
+              <span>S/ {(activeLoan.total_a_devolver - (activeLoan.monto_pagado || 0)).toFixed(2)}</span>
             </div>
           </div>
         </div>
