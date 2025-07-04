@@ -8,7 +8,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import PaymentSelectionPage from "./pages/PaymentSelectionPage";
-import PaymentDetailPage from "./pages/PaymentDetailPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import CardPaymentPage from "./pages/CardPaymentPage";
 import YapePaymentPage from "./pages/YapePaymentPage";
@@ -62,11 +61,6 @@ const App = () => {
               <Route path="/pagar" element={
                 <ProtectedRoute>
                   <PaymentSelectionPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/pagar/metodo" element={
-                <ProtectedRoute>
-                  <PaymentDetailPage />
                 </ProtectedRoute>
               } />
               <Route path="/pagar/exito" element={

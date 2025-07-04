@@ -4,6 +4,7 @@ import { Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface Loan {
   id: string;
@@ -22,6 +23,7 @@ export default function LoanStatusCard() {
   const [activeLoan, setActiveLoan] = useState<Loan | null>(null);
   const [daysLeft, setDaysLeft] = useState<number>(0);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchActiveLoan = async () => {
@@ -87,6 +89,17 @@ export default function LoanStatusCard() {
     return "text-red-600";
   };
 
+  const handlePayment = () => {
+    if (activeLoan) {
+      navigate('/pagar', { 
+        state: { 
+          loanData: activeLoan,
+          daysLeft: daysLeft 
+        } 
+      });
+    }
+  };
+
   if (!activeLoan) {
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
@@ -144,10 +157,7 @@ export default function LoanStatusCard() {
           </div>
           <Button 
             className="bg-app-blue hover:bg-app-blue/90"
-            onClick={() => {
-              // Aquí puedes agregar la lógica para ir a la página de pago
-              console.log('Ir a pagar cuota');
-            }}
+            onClick={handlePayment}
           >
             Pagar
           </Button>

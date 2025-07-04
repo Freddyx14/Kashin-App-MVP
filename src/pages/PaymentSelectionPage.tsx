@@ -1,21 +1,81 @@
 
 import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import HelpButton from "@/components/HelpButton";
 import PaymentOption from "@/components/PaymentOption";
 import { CreditCard, Phone, Landmark, Store } from "lucide-react";
 
+interface LoanData {
+  id: string;
+  monto_prestado: number;
+  interes: number;
+  total_a_devolver: number;
+  cuotas_totales: number;
+  monto_por_cuota: number;
+  fecha_primer_pago: string;
+  dias_para_pago: number;
+  estado: string;
+  created_at: string;
+}
+
 export default function PaymentSelectionPage() {
   const [paymentType, setPaymentType] = useState<"single" | "full">("single");
   const navigate = useNavigate();
+  const location = useLocation();
   
-  const loanData = {
-    date: "Domingo, 25 de mayo",
-    installment: "1 de 1",
-    amount: 65.00
+  const [loanData, setLoanData] = useState<LoanData | null>(null);
+  const [daysLeft, setDaysLeft] = useState<number>(0);
+
+  useEffect(() => {
+    if (location.state?.loanData) {
+      setLoanData(location.state.loanData);
+      setDaysLeft(location.state.daysLeft || 0);
+    }
+  }, [location.state]);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    };
+    return date.toLocaleDateString('es-ES', options)
+      .replace(/^\w/, (c) => c.toUpperCase());
   };
+
+  const calculateLastPaymentDate = () => {
+    if (!loanData) return "";
+    
+    const firstPaymentDate = new Date(loanData.fecha_primer_pago);
+    // Assuming monthly payments, calculate the last payment date
+    const lastPaymentDate = new Date(firstPaymentDate);
+    lastPaymentDate.setMonth(lastPaymentDate.getMonth() + (loanData.cuotas_totales - 1));
+    
+    return formatDate(lastPaymentDate.toISOString());
+  };
+
+  const getPaymentInfo = () => {
+    if (!loanData) return { date: "", installment: "", amount: 0 };
+
+    if (paymentType === "single") {
+      return {
+        date: formatDate(loanData.fecha_primer_pago),
+        installment: "1 de " + loanData.cuotas_totales,
+        amount: loanData.monto_por_cuota
+      };
+    } else {
+      return {
+        date: calculateLastPaymentDate(),
+        installment: "Todas las cuotas",
+        amount: loanData.total_a_devolver
+      };
+    }
+  };
+
+  const paymentInfo = getPaymentInfo();
   
   const handlePaymentMethodSelect = (method: string) => {
     switch(method) {
@@ -35,6 +95,25 @@ export default function PaymentSelectionPage() {
         break;
     }
   };
+
+  if (!loanData) {
+    return (
+      <div className="container mx-auto max-w-md bg-white min-h-screen">
+        <div className="px-4">
+          <BackButton title="Selecciona qué vas a pagar:" />
+          <div className="text-center mt-8">
+            <p className="text-gray-600">No se encontraron datos del préstamo</p>
+            <Button 
+              onClick={() => navigate('/dashboard')}
+              className="mt-4 bg-app-blue hover:bg-app-blue/90"
+            >
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto max-w-md bg-white min-h-screen">
@@ -67,11 +146,11 @@ export default function PaymentSelectionPage() {
         <div className="mt-8">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-gray-700">{loanData.date}</p>
-              <p className="text-gray-700">Cuota {loanData.installment}</p>
+              <p className="text-gray-700">{paymentInfo.date}</p>
+              <p className="text-gray-700">Cuota {paymentInfo.installment}</p>
             </div>
             <div className="text-3xl font-semibold">
-              S/{loanData.amount.toFixed(2)}
+              S/{paymentInfo.amount.toFixed(2)}
             </div>
           </div>
           
