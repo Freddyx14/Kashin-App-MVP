@@ -26,7 +26,7 @@ interface UserProfile {
 
 interface Loan {
   id: string;
-  monto_prestamo: number;
+  monto_prestado: number;
   fecha_solicitud: string;
 }
 
@@ -131,14 +131,7 @@ export default function Dashboard() {
     availableBalance: 50.00,
     creditLine: 100.00,
     points: 0,
-    maxPoints: 750,
-    loan: {
-      isUpToDate: true,
-      daysLeft: 30,
-      paymentDate: "Domingo 25 de Mayo",
-      installment: "1 de 1",
-      amount: 65.00
-    }
+    maxPoints: 750
   };
 
   if (loading) {
@@ -191,13 +184,8 @@ export default function Dashboard() {
             />
           </div>
           
-          <LoanStatusCard 
-            isUpToDate={userData.loan.isUpToDate}
-            daysLeft={userData.loan.daysLeft}
-            paymentDate={userData.loan.paymentDate}
-            installment={userData.loan.installment}
-            amount={userData.loan.amount}
-          />
+          {/* Estado del préstamo con información real */}
+          <LoanStatusCard />
           
           {/* Últimas transacciones - Solo mostrar si hay préstamos */}
           {loans.length > 0 && (
@@ -213,7 +201,7 @@ export default function Dashboard() {
                   type="Préstamo Desembolsado"
                   description="Préstamo solicitado"
                   date={formatDate(loan.fecha_solicitud)}
-                  amount={loan.monto_prestamo}
+                  amount={loan.monto_prestado}
                 />
               ))}
             </div>

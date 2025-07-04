@@ -12,33 +12,51 @@ export type Database = {
       prestamos: {
         Row: {
           created_at: string
+          cuotas_totales: number | null
           detalle_pago: string | null
+          dias_para_pago: number | null
           estado: string | null
+          fecha_primer_pago: string | null
           fecha_solicitud: string
           id: string
           id_usuario: string
+          interes: number | null
           metodo_pago: string | null
-          monto_prestamo: number
+          monto_por_cuota: number | null
+          monto_prestado: number
+          total_a_devolver: number | null
         }
         Insert: {
           created_at?: string
+          cuotas_totales?: number | null
           detalle_pago?: string | null
+          dias_para_pago?: number | null
           estado?: string | null
+          fecha_primer_pago?: string | null
           fecha_solicitud?: string
           id?: string
           id_usuario: string
+          interes?: number | null
           metodo_pago?: string | null
-          monto_prestamo: number
+          monto_por_cuota?: number | null
+          monto_prestado: number
+          total_a_devolver?: number | null
         }
         Update: {
           created_at?: string
+          cuotas_totales?: number | null
           detalle_pago?: string | null
+          dias_para_pago?: number | null
           estado?: string | null
+          fecha_primer_pago?: string | null
           fecha_solicitud?: string
           id?: string
           id_usuario?: string
+          interes?: number | null
           metodo_pago?: string | null
-          monto_prestamo?: number
+          monto_por_cuota?: number | null
+          monto_prestado?: number
+          total_a_devolver?: number | null
         }
         Relationships: []
       }

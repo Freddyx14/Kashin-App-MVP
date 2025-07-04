@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Check, Download, Share2 } from "lucide-react";
@@ -11,11 +10,14 @@ import { toast } from "sonner";
 
 interface LoanData {
   id: string;
-  monto_prestamo: number;
+  monto_prestado: number;
   fecha_solicitud: string;
   metodo_pago: string;
   detalle_pago: string;
-  estado: string;
+  interes: number;
+  total_a_devolver: number;
+  cuotas_totales: number;
+  monto_por_cuota: number;
 }
 
 export default function ReceiptPage() {
@@ -140,7 +142,7 @@ export default function ReceiptPage() {
               <div className="space-y-4">
                 <div className="text-center border-b pb-4">
                   <p className="text-3xl font-bold text-gray-900">
-                    S/{loanData.monto_prestamo.toFixed(2)}
+                    S/{loanData.monto_prestado.toFixed(2)}
                   </p>
                   <p className="text-gray-600">Préstamo Desembolsado</p>
                 </div>
@@ -175,6 +177,30 @@ export default function ReceiptPage() {
                     <span className="text-gray-600">ID de transacción</span>
                     <span className="font-medium text-sm">{loanData.id.toUpperCase().slice(0, 8)}</span>
                   </div>
+
+                  {/* Información adicional del préstamo */}
+                  {loanData.interes && (
+                    <>
+                      <div className="border-t pt-3 mt-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Intereses</span>
+                          <span className="font-medium">S/ {loanData.interes.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Total a devolver</span>
+                          <span className="font-medium">S/ {loanData.total_a_devolver.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Número de cuotas</span>
+                          <span className="font-medium">{loanData.cuotas_totales}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Monto por cuota</span>
+                          <span className="font-medium">S/ {loanData.monto_por_cuota.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -217,7 +243,7 @@ export default function ReceiptPage() {
                 if (navigator.share) {
                   navigator.share({
                     title: 'Comprobante de Pago',
-                    text: `Comprobante de préstamo por S/${loanData.monto_prestamo.toFixed(2)}`,
+                    text: `Comprobante de préstamo por S/${loanData.monto_prestado.toFixed(2)}`,
                   });
                 }
               }}
