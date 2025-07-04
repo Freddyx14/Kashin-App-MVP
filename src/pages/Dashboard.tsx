@@ -1,19 +1,14 @@
 
 import { useEffect, useState } from "react";
-import UserHeader from "@/components/UserHeader";
-import PromoCard from "@/components/PromoCard";
-import LoanStatusCard from "@/components/LoanStatusCard";
-import TransactionItem from "@/components/TransactionItem";
+import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import DashboardHeader from "@/components/DashboardHeader";
+import DashboardContent from "@/components/DashboardContent";
+import TransactionsList from "@/components/TransactionsList";
 import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
 import PaymentAlert from "@/components/PaymentAlert";
-import LoanCalculator from "@/components/LoanCalculator";
-import { Users, Banknote, LogOut } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface UserProfile {
   first_name: string;
@@ -30,9 +25,8 @@ interface Loan {
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,17 +86,6 @@ export default function Dashboard() {
     fetchUserLoans();
   }, [user, location]);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success("Sesión cerrada correctamente");
-      navigate("/welcome");
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error("Error al cerrar sesión");
-    }
-  };
-
   const getUserDisplayName = () => {
     if (userProfile) {
       return `${userProfile.first_name} ${userProfile.last_name}`;
@@ -112,17 +95,6 @@ export default function Dashboard() {
 
   const handleLoanCreated = () => {
     fetchUserLoans(); // Recargar la lista de préstamos
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    };
-    return date.toLocaleDateString('es-ES', options)
-      .replace(/^\w/, (c) => c.toUpperCase());
   };
 
   if (loading) {
@@ -139,58 +111,11 @@ export default function Dashboard() {
   return (
     <div className="pb-20 bg-app-gray min-h-screen">
       <div className="container mx-auto max-w-md bg-white">
-        <div className="flex items-center justify-between p-4">
-          <UserHeader userName={getUserDisplayName()} />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <LogOut size={16} />
-          </Button>
-        </div>
+        <DashboardHeader userDisplayName={getUserDisplayName()} />
         
-        <div className="px-4 pb-6">
-          {/* Calculadora de Préstamos */}
-          <LoanCalculator onLoanCreated={handleLoanCreated} />
-          
-          <div className="grid grid-cols-2 gap-4 my-6">
-            <PromoCard 
-              icon={<Users size={24} />}
-              title="¡Gana S/20 por cada amigo que invites!"
-              onClick={() => navigate("/invitar")}
-            />
-            <PromoCard 
-              icon={<Banknote size={24} />}
-              title="¡Te devolvemos tus intereses y comisiones!"
-              onClick={() => navigate("/recompensas")}
-            />
-          </div>
-          
-          {/* Estado del préstamo con información real */}
-          <LoanStatusCard />
-          
-          {/* Últimas transacciones - Solo mostrar si hay préstamos */}
-          {loans.length > 0 && (
-            <div className="mt-6">
-              <h2 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                Últimas transacciones
-              </h2>
-              
-              {loans.map((loan) => (
-                <TransactionItem
-                  key={loan.id}
-                  id={loan.id}
-                  type="Préstamo Desembolsado"
-                  description="Préstamo solicitado"
-                  date={formatDate(loan.fecha_solicitud)}
-                  amount={loan.monto_prestado}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        <DashboardContent onLoanCreated={handleLoanCreated} />
+        
+        <TransactionsList loans={loans} />
         
         <HelpButton />
         <BottomNav />
