@@ -24,8 +24,9 @@ export default function TransactionItem({
   const handleViewReceipt = () => {
     if (transactionType === 'loan') {
       navigate(`/comprobante/${id}`);
+    } else if (transactionType === 'payment') {
+      navigate(`/comprobante-pago/${id}`);
     }
-    // Para pagos, podríamos agregar una página de comprobante específica en el futuro
   };
 
   const getIcon = () => {
@@ -58,14 +59,12 @@ export default function TransactionItem({
         <p className="font-semibold">
           {transactionType === 'payment' ? '-' : '+'}S/{amount.toFixed(2)}
         </p>
-        {transactionType === 'loan' && (
-          <button 
-            onClick={handleViewReceipt}
-            className="text-app-blue text-sm underline"
-          >
-            Ver constancia
-          </button>
-        )}
+        <button 
+          onClick={handleViewReceipt}
+          className="text-app-blue text-sm underline"
+        >
+          Ver constancia
+        </button>
       </div>
     </div>
   );

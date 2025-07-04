@@ -18,6 +18,7 @@ import InvitePage from "./pages/InvitePage";
 import RewardsPage from "./pages/RewardsPage";
 import MorePage from "./pages/MorePage";
 import ReceiptPage from "./pages/ReceiptPage";
+import PaymentReceiptPage from "./pages/PaymentReceiptPage";
 import RemindersPage from "./pages/RemindersPage";
 import NotFound from "./pages/NotFound";
 import WelcomePage from "./pages/WelcomePage";
@@ -51,6 +52,11 @@ const App = () => {
               <Route path="/comprobante/:id" element={
                 <ProtectedRoute>
                   <ReceiptPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/comprobante-pago/:id" element={
+                <ProtectedRoute>
+                  <PaymentReceiptPage />
                 </ProtectedRoute>
               } />
               <Route path="/recordatorios" element={
