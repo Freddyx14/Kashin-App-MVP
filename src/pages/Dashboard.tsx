@@ -8,7 +8,7 @@ import DashboardContent from "@/components/DashboardContent";
 import TransactionsList from "@/components/TransactionsList";
 import HelpButton from "@/components/HelpButton";
 import BottomNav from "@/components/BottomNav";
-import PaymentAlert from "@/components/PaymentAlert";
+
 
 interface UserProfile {
   first_name: string;
@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPaymentAlert, setShowPaymentAlert] = useState(false);
+  
 
   const fetchUserLoans = async () => {
     if (!user) return;
@@ -73,12 +73,6 @@ export default function Dashboard() {
       } finally {
         setLoading(false);
         
-        // Solo mostrar el pop-up si viene de un login exitoso
-        if (location.state?.fromLogin) {
-          setShowPaymentAlert(true);
-          // Limpiar el estado para que no se muestre de nuevo
-          window.history.replaceState({}, document.title);
-        }
       }
     };
 
@@ -121,11 +115,6 @@ export default function Dashboard() {
         <BottomNav />
       </div>
 
-      {/* Pop-up de alerta de pago */}
-      <PaymentAlert 
-        isOpen={showPaymentAlert} 
-        onClose={() => setShowPaymentAlert(false)} 
-      />
     </div>
   );
 }
